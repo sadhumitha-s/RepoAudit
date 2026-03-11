@@ -1,0 +1,70 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { ScoreCard } from "@/components/ScoreCard";
+import { RadarChart } from "@/components/RadarChart";
+import { FixFeed } from "@/components/FixFeed";
+import { StatusIndicator } from "@/components/StatusIndicator";
+import { getAudit, type AuditResponse } from "@/lib/api";
+
+export default function AuditPage() {
+  const params = useParams<{ id: string }>();
+  const [audit, setAudit] = useState<AuditResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!params.id) return;
+
+    getAudit(params.id)
+      .then(setAudit)
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load audit"))
+      .finally(() => setLoading(false));
+  }, [params.id]);
+
+  if (loading) return <StatusIndicator progress="Loading audit results..." />;
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        {error}
+      </div>
+    );
+  }
+
+  if (!audit?.report) {
+    return (
+      <div className="text-center text-[var(--muted)]">
+        {audit?.status === "failed"
+          ? "This audit failed. The repository may be inaccessible."
+          : "Audit is still processing..."}
+      </div>
+    );
+  }
+
+  const allIssues = audit.report.categories.flatMap((c) => c.issues);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Audit Results</h1>
+        {audit.repo_url && (
+          <p className="text-sm text-[var(--muted)]">{audit.repo_url}</p>
+        )}
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <ScoreCard
+          score={audit.report.total_score}
+          summary={audit.report.summary}
+          cached={audit.cached}
+          commitHash={audit.commit_hash}
+        />
+        <RadarChart categories={audit.report.categories} />
+      </div>
+
+      <FixFeed issues={allIssues} />
+    </div>
+  );
+}
