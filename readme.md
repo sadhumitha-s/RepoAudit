@@ -2,7 +2,7 @@
 
 Automated reproducibility analysis for machine learning research repositories using AST-based static analysis and LLM-powered semantic auditing.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 ## What It Does
 
@@ -174,7 +174,3 @@ curl -X POST http://localhost:7860/api/v1/audit \
 1. On submission, the API resolves the repo's latest `commit_hash` via `git ls-remote`
 2. If that hash exists in Redis or Postgres, the cached report is returned instantly (<200ms)
 3. Otherwise, a Celery task clones the repo (depth=1) and runs the full analysis pipeline
-
-## License
-
-MIT
