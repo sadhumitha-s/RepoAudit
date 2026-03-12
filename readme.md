@@ -4,6 +4,8 @@ Automated reproducibility analysis for machine learning research repositories us
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
+**Live:** [repo-audit.vercel.app](https://repo-audit.vercel.app) · **API:** [repoaudit-api.onrender.com](https://repoaudit-api.onrender.com/health)
+
 ## What It Does
 
 RepoAudit scans public GitHub ML repositories and produces a **reproducibility score (0–100)** across six categories:
@@ -23,11 +25,12 @@ RepoAudit scans public GitHub ML repositories and produces a **reproducibility s
 |-------|-----------|
 | Frontend | Next.js 15, Tailwind CSS, Recharts, Lucide React |
 | Backend API | FastAPI (Python 3.11+) |
-| Task Queue | Celery + Redis (sidecar) |
-| Analysis | Python `ast` module, `libcst` |
+| Task Queue | Celery + Redis |
+| Analysis | Python `ast` module, cross-file import graph |
 | AI Layer | Groq API (Llama-3.3-70B) |
 | Database | PostgreSQL via Supabase |
-| Deployment | HF Spaces (backend), Vercel (frontend) |
+| Cache | Upstash Redis |
+| Deployment | Render (backend), Vercel (frontend) |
 
 ## Project Structure
 
@@ -42,7 +45,7 @@ RepoAudit/
 │   ├── config.py             # Pydantic settings
 │   ├── db.py                 # Supabase client
 │   ├── models.py             # Pydantic schemas
-│   ├── worker.py             # Celery config
+│   ├── worker.py             # Celery config (Upstash TLS)
 │   ├── tasks.py              # Async audit task
 │   ├── routers/
 │   │   └── audit.py          # /api/v1/audit endpoints
@@ -52,7 +55,7 @@ RepoAudit/
 │   │   ├── path_auditor.py   # Hardcoded path detection
 │   │   ├── dependency_auditor.py  # Dependency analysis
 │   │   ├── semantic_auditor.py    # LLM README audit
-│   │   ├── import_graph.py    # Cross-file import graph, cycle detection, execution flow tracing
+│   │   ├── import_graph.py   # Cross-file import graph, cycle detection, flow tracing
 │   │   └── scoring.py        # Weighted score computation
 │   └── tests/
 │       ├── test_ast_auditor.py
@@ -77,7 +80,11 @@ RepoAudit/
 │   │   └── StatusIndicator.tsx   # Progress stepper
 │   └── lib/
 │       └── api.ts            # Typed API client
-├── docker-compose.yml
+├── action/
+│   └── audit.py              # GitHub Action script
+├── action.yml                # GitHub Action metadata
+├── render.yaml               # Render Blueprint
+├── docker-compose.yml        # Local development
 └── LICENSE
 ```
 
@@ -87,7 +94,7 @@ RepoAudit/
 
 - Python 3.11+
 - Node.js 20+
-- Redis (or use Docker)
+- Redis (local dev) or [Upstash](https://upstash.com) account (free tier, production)
 - [Supabase](https://supabase.com) account (free tier)
 - [Groq](https://console.groq.com) API key (free tier)
 
@@ -117,7 +124,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_commit ON audits(commit_hash);
 CREATE INDEX IF NOT EXISTS idx_audit_repo ON audits(repo_id);
 ```
 
-### Option A: Docker (recommended)
+### Option A: Docker (local development)
 
 ```bash
 # 1. Configure environment
@@ -130,7 +137,7 @@ docker compose up --build
 
 Frontend at `http://localhost:3000`, API at `http://localhost:7860`.
 
-### Option B: Local Development
+### Option B: Local without Docker
 
 ```bash
 # Backend
@@ -156,6 +163,42 @@ cd backend
 pytest
 ```
 
+## Deployment
+
+RepoAudit runs on an entirely free stack:
+
+| Service | Platform | Cost |
+|---------|----------|------|
+| Backend (API + Celery) | [Render](https://render.com) | $0 |
+| Frontend | [Vercel](https://vercel.com) | $0 |
+| Redis (cache + broker) | [Upstash](https://upstash.com) | $0 |
+| Database | [Supabase](https://supabase.com) | $0 |
+| LLM | [Groq](https://console.groq.com) | $0 |
+
+### Deploy with Render Blueprint
+
+1. **Upstash** — Create a Redis database at [console.upstash.com](https://console.upstash.com). Copy the `rediss://` URL.
+
+2. **Render** — Go to [render.com](https://render.com) → **New** → **Blueprint** → connect this repo. Render auto-detects render.yaml and prompts for env vars:
+
+   | Key | Value |
+   |-----|-------|
+   | `SUPABASE_URL` | Your Supabase project URL |
+   | `SUPABASE_KEY` | Your Supabase anon key |
+   | `GROQ_API_KEY` | Your Groq API key |
+   | `REDIS_URL` | `rediss://default:...@....upstash.io:6379` |
+   | `CELERY_BROKER_URL` | Same Upstash URL |
+   | `CELERY_RESULT_BACKEND` | Same Upstash URL |
+   | `ALLOWED_ORIGINS` | `https://your-app.vercel.app,http://localhost:3000` |
+
+3. **Vercel** — Import this repo → set **Root Directory** to frontend → add env var:
+
+   | Key | Value |
+   |-----|-------|
+   | `NEXT_PUBLIC_API_URL` | `https://your-app.onrender.com` |
+
+4. **Update ALLOWED_ORIGINS** on Render to include your Vercel URL.
+
 ## API Endpoints
 
 | Method | Path | Description |
@@ -166,9 +209,10 @@ pytest
 | `GET` | `/api/v1/audit/history/{owner}/{repo}` | Score history across audits |
 | `GET` | `/health` | Health check |
 
-**Submit example:**
+**Example:**
+
 ```bash
-curl -X POST http://localhost:7860/api/v1/audit \
+curl -X POST https://repoaudit-api.onrender.com/api/v1/audit \
   -H "Content-Type: application/json" \
   -d '{"url": "https://github.com/owner/repo"}'
 ```
@@ -176,18 +220,71 @@ curl -X POST http://localhost:7860/api/v1/audit \
 ## How Caching Works
 
 1. On submission, the API resolves the repo's latest `commit_hash` via `git ls-remote`
-2. If that hash exists in Redis or Postgres, the cached report is returned instantly (<200ms)
-3. Otherwise, a Celery task clones the repo (depth=1) and runs the full analysis pipeline  
+2. If that hash exists in Upstash Redis (L1) or Supabase Postgres (L2), the cached report is returned instantly
+3. Otherwise, a Celery task clones the repo (depth=1) and runs the full analysis pipeline
 
 ## Score History
 
-When a repository is audited multiple times (e.g. after new commits), RepoAudit tracks score progression over time. The audit detail page renders an interactive line chart showing:
+When a repository is audited multiple times, RepoAudit tracks score progression over time. The audit detail page renders an interactive line chart showing:
 
 - **Total score** trend across audits
 - **Per-category breakdown** (togglable) for environment, determinism, datasets, semantic, execution, and documentation
 - Commit hash labels on hover
 
-The history endpoint accepts a `limit` query parameter (default 50, max 200):
-
 ```bash
-curl http://localhost:7860/api/v1/audit/history/owner/repo?limit=20
+curl https://repoaudit-api.onrender.com/api/v1/audit/history/owner/repo?limit=20
+```
+
+## GitHub Action
+
+Add RepoAudit to any ML repository's CI/CD pipeline:
+
+```yaml
+# .github/workflows/repoaudit.yml
+name: RepoAudit
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: sadhumitha-s/RepoAudit@main
+        id: audit
+        with:
+          api-url: ${{ vars.REPOAUDIT_API_URL }}
+          threshold: "50"
+          comment-on-pr: "true"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: echo "Score — ${{ steps.audit.outputs.score }}/100"
+```
+
+### Action Inputs
+
+| Input | Required | Default | Description |
+|-------|----------|---------|-------------|
+| `api-url` | Yes | — | Base URL of your RepoAudit API |
+| `repo-url` | No | Current repo | Override the repo URL to audit |
+| `threshold` | No | `0` | Minimum score to pass (0 = never fail) |
+| `comment-on-pr` | No | `true` | Post a report comment on PRs |
+| `github-token` | No | — | Token for PR comments (`secrets.GITHUB_TOKEN`) |
+| `timeout` | No | `300` | Max seconds to wait for audit completion |
+
+### Action Outputs
+
+| Output | Description |
+|--------|-------------|
+| `score` | Reproducibility score (0-100) |
+| `audit-id` | Unique audit ID |
+| `status` | `completed` or `failed` |
+| `report-json` | Full report as JSON string |
+
+Set `REPOAUDIT_API_URL` as a repository variable (Settings → Secrets and variables → Actions → Variables) pointing to your deployed backend.
+
+
