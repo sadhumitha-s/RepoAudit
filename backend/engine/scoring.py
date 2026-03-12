@@ -2,7 +2,7 @@
 Scoring engine.
 
 Computes a weighted reproducibility score from 0–100 based on
-6 audit categories.
+6 audit categories, now enhanced with cross-file flow analysis.
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ def _score_environment(
         or dep_result.has_pyproject_toml
         or dep_result.has_setup_py
     ):
-        score -= 60  # No dependency file at all
+        score -= 60
 
     if dep_result.has_dockerfile:
         score = min(score + 10, 100)
@@ -45,7 +45,7 @@ def _score_environment(
         pin_ratio = dep_result.pinned_count / dep_result.total_deps
         score -= (1 - pin_ratio) * 30
     elif dep_result.has_requirements_txt:
-        score -= 20  # Empty requirements.txt
+        score -= 20
 
     if dep_result.missing_deps:
         penalty = min(len(dep_result.missing_deps) * 5, 20)
@@ -60,12 +60,23 @@ def _score_environment(
     )
 
 
-def _score_determinism(det_issues: list[Issue]) -> CategoryScore:
-    """Score determinism based on AST audit findings."""
+def _score_determinism(
+    det_issues: list[Issue],
+    graph_issues: list[Issue],
+) -> CategoryScore:
+    """Score determinism based on AST audit + cross-file flow analysis."""
     score = 100.0
 
-    critical = sum(1 for i in det_issues if i.severity == "critical")
-    warnings = sum(1 for i in det_issues if i.severity == "warning")
+    all_issues = [i for i in det_issues if i.rule == "determinism"]
+    # Add flow-based determinism issues (avoid duplicates by checking message)
+    seen_messages: set[str] = {i.message for i in all_issues}
+    for i in graph_issues:
+        if i.rule == "determinism" and i.message not in seen_messages:
+            all_issues.append(i)
+            seen_messages.add(i.message)
+
+    critical = sum(1 for i in all_issues if i.severity == "critical")
+    warnings = sum(1 for i in all_issues if i.severity == "warning")
 
     score -= critical * 40
     score -= warnings * 10
@@ -75,7 +86,7 @@ def _score_determinism(det_issues: list[Issue]) -> CategoryScore:
         name="determinism",
         weight=CATEGORY_WEIGHTS["determinism"],
         score=round(score, 1),
-        issues=[i for i in det_issues if i.rule == "determinism"],
+        issues=all_issues,
     )
 
 
@@ -87,17 +98,12 @@ def _score_datasets(
     score = 100.0
     issues: list[Issue] = []
 
-    # Hardcoded paths reduce dataset portability
     path_count = len(path_issues)
     score -= min(path_count * 10, 50)
     issues.extend(path_issues)
 
-    # Missing data directories referenced in README
     if semantic_result.missing_data_dirs:
         score -= len(semantic_result.missing_data_dirs) * 15
-        issues.extend(
-            i for i in [] if i.rule == "semantic" and "data" in i.message.lower()
-        )
 
     score = max(0, min(100, score))
     return CategoryScore(
@@ -122,7 +128,7 @@ def _score_semantic(
         score -= min(missing_files * 15, 60)
 
         if semantic_result.llm_error:
-            score = max(score, 50)  # Don't over-penalize when LLM fails
+            score = max(score, 50)
 
     score = max(0, min(100, score))
     return CategoryScore(
@@ -133,8 +139,11 @@ def _score_semantic(
     )
 
 
-def _score_execution(repo_path: str) -> CategoryScore:
-    """Score presence of standard entry points."""
+def _score_execution(
+    repo_path: str,
+    graph_issues: list[Issue],
+) -> CategoryScore:
+    """Score presence of entry points + execution flow health."""
     score = 0.0
     issues: list[Issue] = []
 
@@ -160,6 +169,16 @@ def _score_execution(repo_path: str) -> CategoryScore:
             ),
             fix="Add a main entry point like `train.py` or `main.py`.",
         ))
+
+    # Penalize circular imports (affects execution reliability)
+    circular = [i for i in graph_issues if i.rule == "circular_import"]
+    score -= len(circular) * 15
+    issues.extend(circular)
+
+    # Penalize missing execution flow
+    flow_issues = [i for i in graph_issues if i.rule == "execution_flow"]
+    score -= len(flow_issues) * 10
+    issues.extend(flow_issues)
 
     score = max(0, min(100, score))
     return CategoryScore(
@@ -205,21 +224,24 @@ def compute_report(
     dep_issues: list[Issue],
     semantic_result: SemanticAuditResult,
     semantic_issues: list[Issue],
+    graph_issues: list[Issue] | None = None,
 ) -> AuditReport:
     """Compute the full audit report with weighted scores."""
+    if graph_issues is None:
+        graph_issues = []
+
     categories = [
         _score_environment(dep_result, dep_issues),
-        _score_determinism(det_issues),
+        _score_determinism(det_issues, graph_issues),
         _score_datasets(path_issues, semantic_result),
         _score_semantic(semantic_result, semantic_issues),
-        _score_execution(repo_path),
+        _score_execution(repo_path, graph_issues),
         _score_documentation(semantic_result, semantic_issues),
     ]
 
     total = sum(c.score * c.weight for c in categories)
     total = round(max(0, min(100, total)), 1)
 
-    # Generate summary
     worst = min(categories, key=lambda c: c.score)
     if total >= 80:
         summary = "Repository has good reproducibility practices."

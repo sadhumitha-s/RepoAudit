@@ -52,11 +52,13 @@ RepoAudit/
 │   │   ├── path_auditor.py   # Hardcoded path detection
 │   │   ├── dependency_auditor.py  # Dependency analysis
 │   │   ├── semantic_auditor.py    # LLM README audit
+│   │   ├── import_graph.py    # Cross-file import graph, cycle detection, execution flow tracing
 │   │   └── scoring.py        # Weighted score computation
 │   └── tests/
 │       ├── test_ast_auditor.py
 │       ├── test_path_auditor.py
 │       ├── test_dependency_auditor.py
+│       ├── test_import_graph.py
 │       └── test_scoring.py
 ├── frontend/
 │   ├── Dockerfile

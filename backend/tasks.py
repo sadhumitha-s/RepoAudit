@@ -11,7 +11,7 @@ from worker import celery_app
 from config import get_settings
 from db import get_db
 from engine import cloner, ast_auditor, path_auditor, dependency_auditor
-from engine import semantic_auditor, scoring
+from engine import semantic_auditor, scoring, import_graph
 from models import AuditStatus
 
 logger = logging.getLogger(__name__)
@@ -49,6 +49,12 @@ def run_audit(self, audit_id: str, repo_url: str, commit_hash: str) -> dict:
         path_issues = path_auditor.audit_directory(clone_path)
         dep_result, dep_issues = dependency_auditor.audit_directory(clone_path)
 
+        # Phase 2.5: Import graph + cross-file flow analysis
+        graph_result, graph_issues = import_graph.audit_import_graph(clone_path)
+        det_issues.extend(
+            i for i in graph_issues if i.rule == "determinism"
+        )
+
         # Phase 3: Semantic Audit
         _update_status(audit_id, AuditStatus.SEMANTIC_AUDIT)
         sem_result, sem_issues = semantic_auditor.audit_directory(clone_path)
@@ -63,6 +69,7 @@ def run_audit(self, audit_id: str, repo_url: str, commit_hash: str) -> dict:
             dep_issues=dep_issues,
             semantic_result=sem_result,
             semantic_issues=sem_issues,
+            graph_issues=graph_issues,
         )
 
         report_dict = report.model_dump()
