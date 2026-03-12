@@ -5,8 +5,15 @@ import { useParams } from "next/navigation";
 import { ScoreCard } from "@/components/ScoreCard";
 import { RadarChart } from "@/components/RadarChart";
 import { FixFeed } from "@/components/FixFeed";
+import { ScoreHistory } from "@/components/ScoreHistory";
 import { StatusIndicator } from "@/components/StatusIndicator";
 import { getAudit, type AuditResponse } from "@/lib/api";
+
+function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
+  const match = url.match(/github\.com\/([^/]+)\/([^/]+)/);
+  if (!match) return null;
+  return { owner: match[1], repo: match[2].replace(/\.git$/, "") };
+}
 
 export default function AuditPage() {
   const params = useParams<{ id: string }>();
@@ -44,6 +51,7 @@ export default function AuditPage() {
   }
 
   const allIssues = audit.report.categories.flatMap((c) => c.issues);
+  const parsed = audit.repo_url ? parseGitHubUrl(audit.repo_url) : null;
 
   return (
     <div className="space-y-6">
@@ -63,6 +71,8 @@ export default function AuditPage() {
         />
         <RadarChart categories={audit.report.categories} />
       </div>
+
+      {parsed && <ScoreHistory owner={parsed.owner} repo={parsed.repo} />}
 
       <FixFeed issues={allIssues} />
     </div>

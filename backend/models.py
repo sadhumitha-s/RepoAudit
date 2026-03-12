@@ -71,3 +71,17 @@ class AuditStatusResponse(BaseModel):
     audit_id: str
     status: AuditStatus
     progress: str = ""
+
+
+class ScoreHistoryPoint(BaseModel):
+    audit_id: str
+    commit_hash: str
+    score: float = Field(ge=0, le=100)
+    categories: list[CategoryScore] = []
+    created_at: str
+
+
+class ScoreHistoryResponse(BaseModel):
+    owner: str
+    repo: str
+    points: list[ScoreHistoryPoint]

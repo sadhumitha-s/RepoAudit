@@ -8,7 +8,7 @@ import uuid
 import logging
 
 import redis as redis_lib
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from config import get_settings
 from db import get_db
@@ -19,6 +19,9 @@ from models import (
     AuditStatus,
     AuditStatusResponse,
     AuditReport,
+    CategoryScore,
+    ScoreHistoryPoint,
+    ScoreHistoryResponse,
 )
 from tasks import run_audit
 
@@ -112,6 +115,73 @@ async def submit_audit(req: AuditRequest):
         status=AuditStatus.QUEUED,
         commit_hash=commit_hash,
     )
+
+
+@router.get("/audit/history/{owner}/{repo}", response_model=ScoreHistoryResponse)
+async def get_score_history(
+    owner: str,
+    repo: str,
+    limit: int = Query(default=50, ge=1, le=200),
+):
+    """Get score history for a repository across audits."""
+    db = get_db()
+
+    # Find the repository
+    repo_result = (
+        db.table("repositories")
+        .select("id")
+        .eq("owner", owner)
+        .eq("name", repo)
+        .limit(1)
+        .execute()
+    )
+
+    if not repo_result.data:
+        raise HTTPException(status_code=404, detail="Repository not found")
+
+    repo_id = repo_result.data[0]["id"]
+
+    # Fetch audits chronologically
+    audits = (
+        db.table("audits")
+        .select("id, commit_hash, score, report_json, created_at")
+        .eq("repo_id", repo_id)
+        .order("created_at", desc=False)
+        .limit(limit)
+        .execute()
+    )
+
+    points: list[ScoreHistoryPoint] = []
+    for row in audits.data:
+        report_data = row["report_json"]
+        if isinstance(report_data, str):
+            report_data = json.loads(report_data)
+
+        # Skip failed audits
+        if "error" in report_data:
+            continue
+
+        categories = [
+            CategoryScore(
+                name=cat["name"],
+                weight=cat["weight"],
+                score=cat["score"],
+                issues=[],  # Omit issues for brevity
+            )
+            for cat in report_data.get("categories", [])
+        ]
+
+        points.append(
+            ScoreHistoryPoint(
+                audit_id=row["id"],
+                commit_hash=row["commit_hash"],
+                score=row["score"],
+                categories=categories,
+                created_at=row["created_at"],
+            )
+        )
+
+    return ScoreHistoryResponse(owner=owner, repo=repo, points=points)
 
 
 @router.get("/audit/{audit_id}", response_model=AuditResponse)

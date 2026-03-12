@@ -21,11 +21,11 @@ RepoAudit scans public GitHub ML repositories and produces a **reproducibility s
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Next.js 14, Tailwind CSS, Recharts, Lucide React |
+| Frontend | Next.js 15, Tailwind CSS, Recharts, Lucide React |
 | Backend API | FastAPI (Python 3.11+) |
 | Task Queue | Celery + Redis (sidecar) |
 | Analysis | Python `ast` module, `libcst` |
-| AI Layer | Groq API (Llama-3-70B) |
+| AI Layer | Groq API (Llama-3.3-70B) |
 | Database | PostgreSQL via Supabase |
 | Deployment | HF Spaces (backend), Vercel (frontend) |
 
@@ -72,6 +72,7 @@ RepoAudit/
 │   │   ├── AuditForm.tsx
 │   │   ├── ScoreCard.tsx     # Circular gauge
 │   │   ├── RadarChart.tsx    # 6-axis category chart
+│   │   ├── ScoreHistory.tsx  # Score trend line chart
 │   │   ├── FixFeed.tsx       # Prioritized issue list
 │   │   └── StatusIndicator.tsx   # Progress stepper
 │   └── lib/
@@ -162,6 +163,7 @@ pytest
 | `POST` | `/api/v1/audit` | Submit a repo URL for analysis |
 | `GET` | `/api/v1/audit/{id}` | Get full audit result |
 | `GET` | `/api/v1/audit/{id}/status` | Poll task progress |
+| `GET` | `/api/v1/audit/history/{owner}/{repo}` | Score history across audits |
 | `GET` | `/health` | Health check |
 
 **Submit example:**
@@ -175,4 +177,17 @@ curl -X POST http://localhost:7860/api/v1/audit \
 
 1. On submission, the API resolves the repo's latest `commit_hash` via `git ls-remote`
 2. If that hash exists in Redis or Postgres, the cached report is returned instantly (<200ms)
-3. Otherwise, a Celery task clones the repo (depth=1) and runs the full analysis pipeline
+3. Otherwise, a Celery task clones the repo (depth=1) and runs the full analysis pipeline  
+
+## Score History
+
+When a repository is audited multiple times (e.g. after new commits), RepoAudit tracks score progression over time. The audit detail page renders an interactive line chart showing:
+
+- **Total score** trend across audits
+- **Per-category breakdown** (togglable) for environment, determinism, datasets, semantic, execution, and documentation
+- Commit hash labels on hover
+
+The history endpoint accepts a `limit` query parameter (default 50, max 200):
+
+```bash
+curl http://localhost:7860/api/v1/audit/history/owner/repo?limit=20

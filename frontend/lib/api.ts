@@ -92,3 +92,28 @@ export async function getAuditStatus(
     `/api/v1/audit/${encodeURIComponent(auditId)}/status`,
   );
 }
+
+// --- Score History ---
+
+export interface ScoreHistoryPoint {
+  audit_id: string;
+  commit_hash: string;
+  score: number;
+  categories: CategoryScore[];
+  created_at: string;
+}
+
+export interface ScoreHistoryResponse {
+  owner: string;
+  repo: string;
+  points: ScoreHistoryPoint[];
+}
+
+export async function getScoreHistory(
+  owner: string,
+  repo: string,
+): Promise<ScoreHistoryResponse> {
+  return request<ScoreHistoryResponse>(
+    `/api/v1/audit/history/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
+  );
+}
