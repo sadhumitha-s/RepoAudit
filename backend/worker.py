@@ -1,3 +1,4 @@
+import ssl
 from celery import Celery
 from config import get_settings
 
@@ -23,3 +24,10 @@ celery_app.conf.update(
     worker_prefetch_multiplier=1,
     broker_connection_retry_on_startup=True,
 )
+
+# Enable TLS for Upstash Redis (rediss://) connections
+if settings.celery_broker_url.startswith("rediss://"):
+    celery_app.conf.update(
+        broker_use_ssl={"ssl_cert_reqs": ssl.CERT_REQUIRED},
+        redis_backend_use_ssl={"ssl_cert_reqs": ssl.CERT_REQUIRED},
+    )
