@@ -7,22 +7,22 @@ branding:
 
 inputs:
   api-url:
-    description: Public RepoAudit backend URL (example: https://repoaudit-api.onrender.com)
+    description: "Public RepoAudit backend URL, for example https://repoaudit-api.onrender.com"
     required: true
   repo-url:
-    description: Repository URL to audit. If empty, uses current GitHub repository.
+    description: "Repository URL to audit. If empty, uses current GitHub repository."
     required: false
     default: ""
   threshold:
-    description: Minimum score to pass the workflow (0-100). 0 disables failure gate.
+    description: "Minimum score to pass the workflow, 0 to 100. Set 0 to disable gating."
     required: false
     default: "0"
   timeout-seconds:
-    description: Max wait time for async audit completion.
+    description: "Maximum wait time for async audit completion in seconds."
     required: false
     default: "420"
   poll-interval-seconds:
-    description: Poll interval for status checks.
+    description: "Polling interval in seconds for status checks."
     required: false
     default: "5"
 
