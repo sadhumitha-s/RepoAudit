@@ -4,19 +4,22 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: "0 5 1 * *" #monthly on the 1st at 5am UTC
 
 permissions:
   contents: read
   pull-requests: read
 
 jobs:
-  repoaudit:
+  pr-gate:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Run RepoAudit
+      - name: RepoAudit PR Gate
         id: audit
         uses: ./
         with:
@@ -32,3 +35,62 @@ jobs:
           echo "Audit ID: ${{ steps.audit.outputs.audit-id }}"
           echo "Status: ${{ steps.audit.outputs.status }}"
           echo "Score: ${{ steps.audit.outputs.score }}"
+
+  manual-test-modes:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [relaxed, strict]
+        include:
+          - mode: relaxed
+            threshold: "0"
+          - mode: strict
+            threshold: "85"
+    continue-on-error: ${{ matrix.mode == 'strict' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: RepoAudit Manual Test (${{ matrix.mode }})
+        id: audit
+        uses: ./
+        with:
+          api-url: https://repoaudit-api.onrender.com
+          threshold: ${{ matrix.threshold }}
+          timeout-seconds: "600"
+          poll-interval-seconds: "5"
+          request-timeout-seconds: "180"
+          request-retries: "4"
+
+      - name: Echo outputs
+        run: |
+          echo "Mode: ${{ matrix.mode }}"
+          echo "Audit ID: ${{ steps.audit.outputs.audit-id }}"
+          echo "Status: ${{ steps.audit.outputs.status }}"
+          echo "Score: ${{ steps.audit.outputs.score }}"
+
+  monthly-smoke:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: RepoAudit Monthly Smoke
+        id: audit
+        uses: ./
+        with:
+          api-url: https://repoaudit-api.onrender.com
+          threshold: "0"
+          timeout-seconds: "600"
+          poll-interval-seconds: "5"
+          request-timeout-seconds: "180"
+          request-retries: "4"
+
+      - name: Echo outputs
+        run: |
+          echo "Monthly audit-id: ${{ steps.audit.outputs.audit-id }}"
+          echo "Monthly status: ${{ steps.audit.outputs.status }}"
+          echo "Monthly score: ${{ steps.audit.outputs.score }}"

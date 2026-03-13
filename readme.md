@@ -80,9 +80,6 @@ RepoAudit/
 │   │   └── StatusIndicator.tsx   # Progress stepper
 │   └── lib/
 │       └── api.ts            # Typed API client
-├── action/
-│   └── audit.py              # GitHub Action script
-├── action.yml                # GitHub Action metadata
 ├── render.yaml               # Render Blueprint
 ├── action.yml                # GitHub Action metadata
 ├── action/
@@ -243,10 +240,13 @@ curl https://repoaudit-api.onrender.com/api/v1/audit/history/owner/repo?limit=20
 
 ## GitHub Action
 
-Add RepoAudit to any ML repository's CI/CD pipeline:
+RepoAudit ships as a reusable GitHub Action.  
+
+This repository self-tests the action with uses: ./, while external repositories should use uses: sadhumitha-s/RepoAudit@v1.0.0.
+
+### Recommended usage (external repos)
 
 ```yaml
-# .github/workflows/repoaudit.yml
 name: RepoAudit
 on:
   pull_request:
@@ -260,13 +260,16 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: sadhumitha-s/RepoAudit@main
+      - uses: actions/checkout@v5
+      - uses: sadhumitha-s/RepoAudit@v1.0.0
         id: audit
         with:
           api-url: https://repoaudit-api.onrender.com
           threshold: "50"
-          timeout-seconds: "420"
+          timeout-seconds: "600"
+          poll-interval-seconds: "5"
+          request-timeout-seconds: "180"
+          request-retries: "4"
       - run: echo "Score — ${{ steps.audit.outputs.score }}/100"
 ```
 
@@ -276,9 +279,11 @@ jobs:
 |-------|----------|---------|-------------|
 | `api-url` | Yes | — | Base URL of your RepoAudit API |
 | `repo-url` | No | Current repo | Override the repo URL to audit |
-| `threshold` | No | `0` | Minimum score to pass the build (0 = never fail) |
-| `timeout-seconds` | No | `420` | Max seconds to wait for audit completion |
-| `poll-interval-seconds` | No | `5` | How often to poll for status updates |
+| `threshold` | No | `0` | Minimum score to pass the build |
+| `timeout-seconds` | No | `600` | Max total wait for audit completion |
+| `poll-interval-seconds` | No | `5` | Status poll interval |
+| `request-timeout-seconds` | No | `180` | Per HTTP request timeout |
+| `request-retries` | No | `4` | Retries for transient network/gateway failures |
 
 ### Action Outputs
 
@@ -287,11 +292,11 @@ jobs:
 | `score` | Reproducibility score (0–100) |
 | `audit-id` | Unique audit ID |
 | `status` | `completed` or `failed` |
-| `report-json` | Full report JSON (pipe into other steps) |
+| `report-json` | Full report JSON |
 
-The job summary tab in every GitHub Actions run will show the full score breakdown table automatically.
+### CI modes in this repository
 
-
-
-
-
+The workflow in .github/workflows/repoaudit.yml includes:
+- PR gate (`threshold: 50`)
+- Manual strict+relaxed test matrix
+- Monthly smoke run (`threshold: 0`)
