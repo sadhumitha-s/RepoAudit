@@ -1,0 +1,32 @@
+name: RepoAudit CI
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  repoaudit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run RepoAudit
+        id: audit
+        uses: ./
+        with:
+          api-url: https://repoaudit-api.onrender.com
+          threshold: "50"
+          timeout-seconds: "420"
+          poll-interval-seconds: "5"
+
+      - name: Echo outputs
+        run: |
+          echo "Audit ID: ${{ steps.audit.outputs.audit-id }}"
+          echo "Status: ${{ steps.audit.outputs.status }}"
+          echo "Score: ${{ steps.audit.outputs.score }}"

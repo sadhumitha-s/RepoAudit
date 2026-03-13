@@ -1,0 +1,58 @@
+name: RepoAudit CI
+description: Run RepoAudit against a repository and publish score in CI
+
+branding:
+  icon: shield
+  color: blue
+
+inputs:
+  api-url:
+    description: Public RepoAudit backend URL (example: https://repoaudit-api.onrender.com)
+    required: true
+  repo-url:
+    description: Repository URL to audit. If empty, uses current GitHub repository.
+    required: false
+    default: ""
+  threshold:
+    description: Minimum score to pass the workflow (0-100). 0 disables failure gate.
+    required: false
+    default: "0"
+  timeout-seconds:
+    description: Max wait time for async audit completion.
+    required: false
+    default: "420"
+  poll-interval-seconds:
+    description: Poll interval for status checks.
+    required: false
+    default: "5"
+
+outputs:
+  score:
+    description: Final reproducibility score
+    value: ${{ steps.run.outputs.score }}
+  audit-id:
+    description: RepoAudit audit ID
+    value: ${{ steps.run.outputs.audit-id }}
+  status:
+    description: Final status
+    value: ${{ steps.run.outputs.status }}
+  report-json:
+    description: Full audit report JSON
+    value: ${{ steps.run.outputs.report-json }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run RepoAudit Action Script
+      id: run
+      shell: bash
+      env:
+        INPUT_API_URL: ${{ inputs.api-url }}
+        INPUT_REPO_URL: ${{ inputs.repo-url }}
+        INPUT_THRESHOLD: ${{ inputs.threshold }}
+        INPUT_TIMEOUT_SECONDS: ${{ inputs.timeout-seconds }}
+        INPUT_POLL_INTERVAL_SECONDS: ${{ inputs.poll-interval-seconds }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        GITHUB_OUTPUT: ${{ github.output }}
+        GITHUB_STEP_SUMMARY: ${{ github.step_summary }}
+      run: python "${{ github.action_path }}/action/audit.py"

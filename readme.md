@@ -84,6 +84,12 @@ RepoAudit/
 │   └── audit.py              # GitHub Action script
 ├── action.yml                # GitHub Action metadata
 ├── render.yaml               # Render Blueprint
+├── action.yml                # GitHub Action metadata
+├── action/
+│   └── audit.py              # GitHub Action script (stdlib only)
+├── .github/
+│   └── workflows/
+│       └── repoaudit.yml     # CI workflow for this repo
 ├── docker-compose.yml        # Local development
 └── LICENSE
 ```
@@ -245,10 +251,10 @@ name: RepoAudit
 on:
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   audit:
@@ -258,10 +264,9 @@ jobs:
       - uses: sadhumitha-s/RepoAudit@main
         id: audit
         with:
-          api-url: ${{ vars.REPOAUDIT_API_URL }}
+          api-url: https://repoaudit-api.onrender.com
           threshold: "50"
-          comment-on-pr: "true"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          timeout-seconds: "420"
       - run: echo "Score — ${{ steps.audit.outputs.score }}/100"
 ```
 
@@ -271,20 +276,22 @@ jobs:
 |-------|----------|---------|-------------|
 | `api-url` | Yes | — | Base URL of your RepoAudit API |
 | `repo-url` | No | Current repo | Override the repo URL to audit |
-| `threshold` | No | `0` | Minimum score to pass (0 = never fail) |
-| `comment-on-pr` | No | `true` | Post a report comment on PRs |
-| `github-token` | No | — | Token for PR comments (`secrets.GITHUB_TOKEN`) |
-| `timeout` | No | `300` | Max seconds to wait for audit completion |
+| `threshold` | No | `0` | Minimum score to pass the build (0 = never fail) |
+| `timeout-seconds` | No | `420` | Max seconds to wait for audit completion |
+| `poll-interval-seconds` | No | `5` | How often to poll for status updates |
 
 ### Action Outputs
 
 | Output | Description |
 |--------|-------------|
-| `score` | Reproducibility score (0-100) |
+| `score` | Reproducibility score (0–100) |
 | `audit-id` | Unique audit ID |
 | `status` | `completed` or `failed` |
-| `report-json` | Full report as JSON string |
+| `report-json` | Full report JSON (pipe into other steps) |
 
-Set `REPOAUDIT_API_URL` as a repository variable (Settings → Secrets and variables → Actions → Variables) pointing to your deployed backend.
+The job summary tab in every GitHub Actions run will show the full score breakdown table automatically.
+
+
+
 
 
