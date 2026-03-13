@@ -16,6 +16,8 @@ def env(name: str, default: str = "") -> str:
 API_URL = env("INPUT_API_URL").rstrip("/")
 REPO_URL = env("INPUT_REPO_URL")
 THRESHOLD = int(env("INPUT_THRESHOLD", "0"))
+REQUEST_TIMEOUT_SECONDS = int(env("INPUT_REQUEST_TIMEOUT_SECONDS", "180"))
+REQUEST_RETRIES = int(env("INPUT_REQUEST_RETRIES", "4"))
 TIMEOUT_SECONDS = int(env("INPUT_TIMEOUT_SECONDS", "420"))
 POLL_INTERVAL_SECONDS = int(env("INPUT_POLL_INTERVAL_SECONDS", "5"))
 GITHUB_REPOSITORY = env("GITHUB_REPOSITORY")
@@ -53,22 +55,40 @@ def request_json(method: str, url: str, body: dict | None = None) -> dict:
     headers = {"Content-Type": "application/json", "Accept": "application/json"}
     if body is not None:
         data = json.dumps(body).encode("utf-8")
-    req = urllib.request.Request(url=url, method=method, headers=headers, data=data)
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            raw = resp.read().decode("utf-8")
-            return json.loads(raw) if raw else {}
-    except urllib.error.HTTPError as e:
-        text = e.read().decode("utf-8", errors="ignore")
-        detail = text
+
+    last_err = None
+    for attempt in range(REQUEST_RETRIES + 1):
+        req = urllib.request.Request(url=url, method=method, headers=headers, data=data)
         try:
-            payload = json.loads(text)
-            detail = payload.get("detail", text)
-        except Exception:
-            pass
-        fail(f"HTTP {e.code} calling {url}: {detail}")
-    except urllib.error.URLError as e:
-        fail(f"Network error calling {url}: {e.reason}")
+            with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT_SECONDS) as resp:
+                raw = resp.read().decode("utf-8")
+                return json.loads(raw) if raw else {}
+        except urllib.error.HTTPError as e:
+            text = e.read().decode("utf-8", errors="ignore")
+            detail = text
+            try:
+                payload = json.loads(text)
+                detail = payload.get("detail", text)
+            except Exception:
+                pass
+            # Retry transient gateway/service errors
+            if e.code in (502, 503, 504) and attempt < REQUEST_RETRIES:
+                sleep_s = min(30, 2 ** attempt)
+                log(f"Transient HTTP {e.code}, retrying in {sleep_s}s...")
+                time.sleep(sleep_s)
+                last_err = f"HTTP {e.code}: {detail}"
+                continue
+            fail(f"HTTP {e.code} calling {url}: {detail}")
+        except (urllib.error.URLError, TimeoutError) as e:
+            last_err = str(getattr(e, "reason", e))
+            if attempt < REQUEST_RETRIES:
+                sleep_s = min(30, 2 ** attempt)
+                log(f"Network timeout/error, retrying in {sleep_s}s... ({last_err})")
+                time.sleep(sleep_s)
+                continue
+            fail(f"Network error calling {url}: {last_err}")
+
+    fail(f"Request failed after retries: {last_err}")
     return {}
 
 
@@ -151,6 +171,9 @@ def main() -> None:
     repo_url = infer_repo_url()
     log(f"Using API: {API_URL}")
     log(f"Auditing repo: {repo_url}")
+
+    log("Warming up backend...")
+    request_json("GET", f"{API_URL}/health")
 
     submit_url = f"{API_URL}/api/v1/audit"
     submit_resp = request_json("POST", submit_url, {"url": repo_url})

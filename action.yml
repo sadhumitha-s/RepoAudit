@@ -18,13 +18,21 @@ inputs:
     required: false
     default: "0"
   timeout-seconds:
-    description: "Maximum wait time in seconds."
+    description: "Maximum total wait time in seconds."
     required: false
-    default: "420"
+    default: "600"
   poll-interval-seconds:
     description: "Polling interval in seconds."
     required: false
     default: "5"
+  request-timeout-seconds:
+    description: "Per HTTP request timeout in seconds."
+    required: false
+    default: "180"
+  request-retries:
+    description: "Retry count for transient network errors."
+    required: false
+    default: "4"
 
 outputs:
   score:
@@ -49,6 +57,8 @@ runs:
       env:
         INPUT_API_URL: ${{ inputs.api-url }}
         INPUT_REPO_URL: ${{ inputs.repo-url }}
+        INPUT_REQUEST_TIMEOUT_SECONDS: ${{ inputs.request-timeout-seconds }}
+        INPUT_REQUEST_RETRIES: ${{ inputs.request-retries }}
         INPUT_THRESHOLD: ${{ inputs.threshold }}
         INPUT_TIMEOUT_SECONDS: ${{ inputs.timeout-seconds }}
         INPUT_POLL_INTERVAL_SECONDS: ${{ inputs.poll-interval-seconds }}

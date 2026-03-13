@@ -22,8 +22,10 @@ jobs:
         with:
           api-url: https://repoaudit-api.onrender.com
           threshold: "50"
-          timeout-seconds: "420"
+          timeout-seconds: "600"
           poll-interval-seconds: "5"
+          request-timeout-seconds: "180"
+          request-retries: "4"
 
       - name: Echo outputs
         run: |
