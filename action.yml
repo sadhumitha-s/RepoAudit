@@ -1,5 +1,5 @@
 name: RepoAudit CI
-description: Run RepoAudit against a repository and publish score in CI
+description: Run RepoAudit and publish score
 
 branding:
   icon: shield
@@ -7,22 +7,22 @@ branding:
 
 inputs:
   api-url:
-    description: "Public RepoAudit backend URL, for example https://repoaudit-api.onrender.com"
+    description: "Public RepoAudit backend URL"
     required: true
   repo-url:
-    description: "Repository URL to audit. If empty, uses current GitHub repository."
+    description: "Repository URL to audit. Empty uses current repository."
     required: false
     default: ""
   threshold:
-    description: "Minimum score to pass the workflow, 0 to 100. Set 0 to disable gating."
+    description: "Minimum passing score 0 to 100. Use 0 to disable."
     required: false
     default: "0"
   timeout-seconds:
-    description: "Maximum wait time for async audit completion in seconds."
+    description: "Maximum wait time in seconds."
     required: false
     default: "420"
   poll-interval-seconds:
-    description: "Polling interval in seconds for status checks."
+    description: "Polling interval in seconds."
     required: false
     default: "5"
 
