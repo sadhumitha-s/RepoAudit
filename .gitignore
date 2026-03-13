@@ -40,3 +40,7 @@ prompt/
 
 #local redis data
 dump.rdb
+**dump.rdb
+
+eval "$(ssh-agent -s)"
+eval "$(ssh-agent -s)".pub
