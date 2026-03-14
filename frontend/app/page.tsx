@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { AuditForm } from "@/components/AuditForm";
 import { StatusIndicator } from "@/components/StatusIndicator";
 import { ScoreCard } from "@/components/ScoreCard";
@@ -27,6 +26,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [polling, setPolling] = useState(false);
   const [progress, setProgress] = useState("");
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
 
   async function handleSubmit(url: string) {
     setError(null);
@@ -34,6 +34,7 @@ export default function HomePage() {
     setLoading(true);
     setPolling(false);
     setProgress("");
+    setCopyStatus("idle");
 
     try {
       const result = await submitAudit(url);
@@ -90,8 +91,27 @@ export default function HomePage() {
     setPolling(false);
   }
 
-  const allIssues =
-    audit?.report?.categories.flatMap((c) => c.issues) ?? [];
+  function getPermalinkUrl(auditId: string): string {
+    if (typeof window === "undefined") return `/audit/${auditId}`;
+    return `${window.location.origin}/audit/${auditId}`;
+  }
+
+  function openPermalink(auditId: string) {
+    window.open(`/audit/${auditId}`, "_blank", "noopener,noreferrer");
+  }
+
+  async function copyPermalink(auditId: string) {
+    try {
+      await navigator.clipboard.writeText(getPermalinkUrl(auditId));
+      setCopyStatus("copied");
+      setTimeout(() => setCopyStatus("idle"), 2000);
+    } catch {
+      setCopyStatus("failed");
+      setTimeout(() => setCopyStatus("idle"), 2000);
+    }
+  }
+
+  const allIssues = audit?.report?.categories.flatMap((c) => c.issues) ?? [];
   const parsed = audit?.repo_url ? parseGitHubUrl(audit.repo_url) : null;
 
   return (
@@ -118,6 +138,27 @@ export default function HomePage() {
 
       {audit?.report && (
         <div className="space-y-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => openPermalink(audit.audit_id)}
+              className="rounded-md border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm transition-colors hover:bg-gray-50"
+            >
+              View Permalink
+            </button>
+            <button
+              onClick={() => copyPermalink(audit.audit_id)}
+              className="rounded-md border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm transition-colors hover:bg-gray-50"
+            >
+              Copy Link
+            </button>
+            {copyStatus === "copied" && (
+              <span className="text-xs text-green-700">Copied!</span>
+            )}
+            {copyStatus === "failed" && (
+              <span className="text-xs text-red-700">Copy failed</span>
+            )}
+          </div>
+
           <div className="grid gap-6 md:grid-cols-2">
             <ScoreCard
               score={audit.report.total_score}
