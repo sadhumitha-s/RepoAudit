@@ -25,11 +25,11 @@ RepoAudit scans public GitHub ML repositories and produces a **reproducibility s
 |-------|-----------|
 | Frontend | Next.js 15, Tailwind CSS, Recharts, Lucide React |
 | Backend API | FastAPI (Python 3.11+) |
-| Task Queue | Celery + Redis |
+| Task Queue | Celery + Valkey (local) / Upstash Redis (production) |
 | Analysis | Python `ast` module, cross-file import graph |
 | AI Layer | Groq API (Llama-3.3-70B) |
 | Database | PostgreSQL via Supabase |
-| Cache | Upstash Redis |
+| Cache | Valkey protocol cache (local Valkey, Upstash Redis in production) |
 | Deployment | Render (backend), Vercel (frontend) |
 
 ## Project Structure
@@ -97,7 +97,7 @@ RepoAudit/
 
 - Python 3.11+
 - Node.js 20+
-- Redis (local dev) or [Upstash](https://upstash.com) account (free tier, production)
+- Valkey (local dev) or [Upstash](https://upstash.com) account (free tier, production)
 - [Supabase](https://supabase.com) account (free tier)
 - [Groq](https://console.groq.com) API key (free tier)
 
@@ -148,7 +148,7 @@ cd backend
 cp .env.example .env
 # Edit .env with your keys
 pip install -r requirements.txt
-redis-server &
+valkey-server &
 celery -A worker worker --loglevel=info &
 uvicorn main:app --reload --port 7860
 
@@ -242,7 +242,7 @@ curl https://repoaudit-api.onrender.com/api/v1/audit/history/owner/repo?limit=20
 
 RepoAudit ships as a reusable GitHub Action.  
 
-This repository self-tests the action with uses: ./, while external repositories should use uses: sadhumitha-s/RepoAudit@v1.0.0.
+This repository self-tests the action with `uses: ./`, while external repositories should use `uses: sadhumitha-s/RepoAudit@v1.0.0`.
 
 ### Recommended usage (external repos)
 

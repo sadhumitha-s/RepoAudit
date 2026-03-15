@@ -2,12 +2,12 @@ version: "3.9"
 
 services:
   redis:
-    image: redis:7-alpine
-    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    image: valkey/valkey:7-alpine
+    command: valkey-server --maxmemory 128mb --maxmemory-policy allkeys-lru
     ports:
       - "6379:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "valkey-cli", "ping"]
       interval: 10s
       timeout: 3s
       retries: 3
