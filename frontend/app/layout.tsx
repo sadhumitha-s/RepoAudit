@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
+import { Public_Sans } from "next/font/google";
 import "./globals.css";
+
+const publicSans = Public_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-public-sans",
+});
 
 export const metadata: Metadata = {
   title: "RepoAudit — ML Reproducibility Scanner",
@@ -16,19 +23,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-[var(--background)]">
-        <header className="border-b border-[var(--border)] bg-[var(--card)]">
-          <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-            <a href="/" className="text-xl font-bold text-brand-700">
-              RepoAudit
+    <html lang="en" className={publicSans.variable}>
+      <body className="min-h-screen bg-[var(--background)] font-sans text-white">
+        <header className="border-b-[3px] border-white bg-[#0D1117]">
+          <div className="mx-auto flex max-w-5xl items-center px-4 py-4">
+            <a href="/" className="text-2xl font-black text-brand-accent tracking-tighter">
+              REPOAUDIT.
             </a>
-            <span className="text-sm text-[var(--muted)]">
-              ML Reproducibility Scanner
-            </span>
           </div>
         </header>
-        <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+        <main className="mx-auto max-w-5xl px-4 py-12">{children}</main>
       </body>
     </html>
   );

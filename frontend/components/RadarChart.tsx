@@ -32,36 +32,40 @@ export function RadarChart({ categories }: Props) {
   }));
 
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm">
-      <h2 className="mb-4 text-lg font-semibold">Category Breakdown</h2>
-      <ResponsiveContainer width="100%" height={280}>
+    <div className="neo-card p-6 flex flex-col">
+      <h2 className="mb-4 text-xl font-bold uppercase tracking-wide text-white">Category Breakdown</h2>
+      <ResponsiveContainer width="100%" height={300}>
         <RechartsRadarChart data={data}>
-          <PolarGrid stroke="var(--border)" />
+          <PolarGrid stroke="#3f3f46" strokeWidth={2} />
           <PolarAngleAxis
             dataKey="category"
-            tick={{ fontSize: 12, fill: "var(--muted)" }}
+            tick={{ fontSize: 13, fill: "#e0e0e0", fontWeight: 'bold' }}
           />
           <PolarRadiusAxis
             angle={90}
             domain={[0, 100]}
-            tick={{ fontSize: 10, fill: "var(--muted)" }}
+            tick={{ fontSize: 11, fill: "#a1a1aa" }}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: "var(--card)",
-              border: "1px solid var(--border)",
-              borderRadius: "8px",
-              fontSize: "13px",
+              backgroundColor: "#E6D18C", // Accent color for tooltip
+              border: "2px solid #000000",
+              borderRadius: "0px",
+              fontSize: "14px",
+              fontWeight: "bold",
+              color: "#000000",
+              boxShadow: "4px 4px 0px 0px rgba(0,0,0,1)"
             }}
-            formatter={(value: number) => [`${value}/100`, "Score"]}
+            itemStyle={{ color: "#000000" }}
+            formatter={(value: number) => [`${value}/100`, "SCORE"]}
           />
           <Radar
             name="Score"
             dataKey="score"
-            stroke="#0284c7"
-            fill="#0ea5e9"
-            fillOpacity={0.25}
-            strokeWidth={2}
+            stroke="#E6D18C"
+            fill="#E6D18C"
+            fillOpacity={0.8}
+            strokeWidth={4}
           />
         </RechartsRadarChart>
       </ResponsiveContainer>

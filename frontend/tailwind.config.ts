@@ -9,13 +9,20 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          50: "#f0f9ff",
-          100: "#e0f2fe",
-          500: "#0ea5e9",
-          600: "#0284c7",
-          700: "#0369a1",
-          900: "#0c4a6e",
+          accent: "#E6D18C", // Yellow/Gold from Figma
+          dark: "#000000",
+          card: "#0D1117",
+          border: "#FFFFFF"
         },
+      },
+      boxShadow: {
+        neo: "4px 4px 0px 0px rgba(0,0,0,1)",
+        "neo-sm": "2px 2px 0px 0px rgba(0,0,0,1)",
+        "neo-lg": "8px 8px 0px 0px rgba(0,0,0,1)",
+        "neo-white": "4px 4px 0px 0px rgba(255,255,255,1)",
+      },
+      fontFamily: {
+        sans: ["var(--font-public-sans)", "sans-serif"],
       },
     },
   },

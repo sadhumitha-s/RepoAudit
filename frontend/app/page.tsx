@@ -115,12 +115,12 @@ export default function HomePage() {
   const parsed = audit?.repo_url ? parseGitHubUrl(audit.repo_url) : null;
 
   return (
-    <div className="space-y-8">
-      <section className="text-center">
-        <h1 className="mb-2 text-3xl font-bold tracking-tight">
-          Audit Your ML Repository
+    <div className="space-y-12">
+      <section className="text-center mt-8">
+        <h1 className="mb-4 text-5xl md:text-6xl font-black tracking-tighter uppercase">
+          Audit Your <span className="text-brand-accent">ML</span> Repository
         </h1>
-        <p className="text-[var(--muted)]">
+        <p className="text-lg text-gray-400 font-medium max-w-2xl mx-auto">
           Paste a public GitHub URL to get a reproducibility score with
           actionable fixes.
         </p>
@@ -129,37 +129,34 @@ export default function HomePage() {
       <AuditForm onSubmit={handleSubmit} loading={loading} />
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error}
+        <div className="neo-border bg-red-500 text-white p-4 text-base font-bold shadow-neo">
+          ERROR: {error}
         </div>
       )}
 
       {polling && <StatusIndicator progress={progress} />}
 
       {audit?.report && (
-        <div className="space-y-6">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="space-y-12 animate-in fade-in duration-500">
+          <div className="flex flex-wrap items-center gap-4 border-b-2 border-white pb-6">
             <button
               onClick={() => openPermalink(audit.audit_id)}
-              className="rounded-md border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm transition-colors hover:bg-gray-50"
+              className="neo-button px-4 py-2 text-sm bg-white"
             >
-              View Permalink
+              VIEW PERMALINK
             </button>
             <button
               onClick={() => copyPermalink(audit.audit_id)}
-              className="rounded-md border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm transition-colors hover:bg-gray-50"
+              className="neo-button px-4 py-2 text-sm bg-white flex items-center gap-2"
             >
-              Copy Link
+              {copyStatus === "copied" ? "COPIED!" : "COPY LINK"}
             </button>
-            {copyStatus === "copied" && (
-              <span className="text-xs text-green-700">Copied!</span>
-            )}
             {copyStatus === "failed" && (
-              <span className="text-xs text-red-700">Copy failed</span>
+              <span className="text-sm font-bold text-red-500 bg-red-500/10 px-2 py-1 neo-border">COPY FAILED</span>
             )}
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-8 md:grid-cols-2">
             <ScoreCard
               score={audit.report.total_score}
               summary={audit.report.summary}

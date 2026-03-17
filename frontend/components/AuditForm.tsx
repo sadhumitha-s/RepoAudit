@@ -35,10 +35,10 @@ export function AuditForm({ onSubmit, loading }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto max-w-2xl">
-      <div className="flex gap-2">
+    <form onSubmit={handleSubmit} className="mx-auto max-w-2xl mt-12 mb-16">
+      <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
+          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
           <input
             type="url"
             value={url}
@@ -47,29 +47,29 @@ export function AuditForm({ onSubmit, loading }: Props) {
               setValidationError("");
             }}
             placeholder="https://github.com/owner/repo"
-            className="w-full rounded-lg border border-[var(--border)] bg-[var(--card)] py-3 pl-10 pr-4 text-sm shadow-sm transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+            className="w-full h-14 neo-border bg-[#0D1117] text-white py-3 pl-12 pr-4 text-base shadow-neo focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent transition-none placeholder:text-gray-500"
             disabled={loading}
           />
         </div>
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-700 disabled:opacity-50"
+          className="neo-button h-14 px-8 text-base tracking-wide flex items-center justify-center gap-2 "
         >
           {loading ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Analyzing
+              <Loader2 className="h-5 w-5 animate-spin" />
+              ANALYZING
             </>
           ) : (
-            "Audit"
+            "AUDIT REPO"
           )}
         </button>
       </div>
       {validationError && (
-        <p className="mt-2 text-sm text-[var(--destructive)]">
+        <div className="mt-4 neo-border bg-red-500 text-white p-3 font-medium text-sm inline-block shadow-neo">
           {validationError}
-        </p>
+        </div>
       )}
     </form>
   );

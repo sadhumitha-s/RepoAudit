@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 :root {
-  --foreground: #0f172a;
-  --background: #f8fafc;
-  --muted: #64748b;
-  --border: #e2e8f0;
-  --card: #ffffff;
+  --foreground: #e0e0e0;
+  --background: #000000;
+  --muted: #a1a1aa;
+  --border: #3f3f46;
+  --card: #0d1117;
   --destructive: #ef4444;
   --warning: #f59e0b;
   --success: #22c55e;
@@ -16,8 +16,22 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: var(--font-public-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Base component styles for neobrutalism */
+.neo-border {
+  border: 2px solid var(--border);
+  border-radius: 0 !important;
+}
+
+.neo-card {
+  @apply neo-border bg-brand-card shadow-neo;
+}
+
+.neo-button {
+  @apply border-2 border-brand-dark bg-brand-accent text-brand-dark font-bold shadow-neo transition-transform active:translate-x-1 active:translate-y-1 active:shadow-none hover:-translate-y-0.5 hover:-translate-x-0.5 hover:shadow-neo-lg;
+  border-radius: 0 !important;
 }
