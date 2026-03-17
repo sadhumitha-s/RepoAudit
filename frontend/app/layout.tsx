@@ -9,7 +9,7 @@ const publicSans = Public_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "RepoAudit — ML Reproducibility Scanner",
+  title: "RepoAudit | ML Repo Reproducibility Scanner",
   description:
     "Automated reproducibility analysis for machine learning research repositories.",
   icons: {
