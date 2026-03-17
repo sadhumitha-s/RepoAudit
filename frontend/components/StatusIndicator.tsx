@@ -30,34 +30,34 @@ export function StatusIndicator({ progress }: Props) {
   const activeStep = inferStep(progress);
 
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm">
+    <div className="neo-card p-6 flex flex-col">
       {/* Live status line */}
-      <div className="mb-4 flex items-center gap-2">
-        <Loader2 className="h-4 w-4 animate-spin text-brand-600" />
-        <span className="text-sm font-medium text-[var(--foreground)]">
-          {progress || "Processing..."}
+      <div className="mb-6 flex items-center gap-3 border-b-2 border-[#3f3f46] pb-4">
+        <Loader2 className="h-6 w-6 animate-spin text-brand-accent" />
+        <span className="text-base font-bold uppercase tracking-wider text-white">
+          {progress || "PROCESSING..."}
         </span>
       </div>
 
       {/* Step progress bar */}
-      <div className="flex items-start gap-1">
+      <div className="flex items-start gap-2">
         {STEPS.map((step, i) => (
           <div
             key={step.key}
-            className="flex flex-1 flex-col items-center gap-1.5"
+            className="flex flex-1 flex-col items-center gap-2"
           >
             <div
-              className={`h-1.5 w-full rounded-full transition-colors duration-500 ${
-                i <= activeStep ? "bg-brand-500" : "bg-[var(--border)]"
+              className={`h-3 w-full border-2 border-black transition-colors duration-500 shadow-neo-sm ${
+                i <= activeStep ? "bg-brand-accent" : "bg-[#3f3f46]"
               }`}
             />
             <span
-              className={`text-[11px] leading-tight ${
+              className={`text-xs text-center font-bold uppercase tracking-wider ${
                 i === activeStep
-                  ? "font-semibold text-brand-700"
+                  ? "text-brand-accent"
                   : i < activeStep
-                    ? "font-medium text-brand-600"
-                    : "text-[var(--muted)]"
+                    ? "text-white"
+                    : "text-gray-500"
               }`}
             >
               {step.label}
