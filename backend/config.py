@@ -5,7 +5,7 @@ import os
 
 class Settings(BaseSettings):
     supabase_url: str = ""
-    supabase_key: str = ""
+    supabase_service_role_key: str = ""
     groq_api_key: str = ""
     redis_url: str = "redis://localhost:6379/0"
     allowed_origins: str = "http://localhost:3000"
