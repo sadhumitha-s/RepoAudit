@@ -1,6 +1,6 @@
 # RepoAudit
 
-Automated reproducibility analysis for machine learning research repositories using AST-based static analysis and LLM-powered semantic auditing.
+Automated reproducibility analysis for machine learning research repositories (supporting Python, R, Julia, and Jupyter Notebooks) using AST-based static analysis and LLM-powered semantic auditing.
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
@@ -26,7 +26,7 @@ RepoAudit scans public GitHub ML repositories and produces a **reproducibility s
 | Frontend | Next.js 15, Tailwind CSS, Recharts, Lucide React |
 | Backend API | FastAPI (Python 3.11+) |
 | Task Queue | Celery + Valkey (local) / Upstash Redis (production) |
-| Analysis | Python `ast` module, cross-file import graph |
+| Analysis | Python `ast` module, Tree-sitter (R, Julia), Jupyter parsing, cross-file import graph |
 | AI Layer | Groq API (Llama-3.3-70B) |
 | Database | PostgreSQL via Supabase |
 | Cache | Valkey protocol cache (local Valkey, Upstash Redis in production) |
@@ -51,9 +51,11 @@ RepoAudit/
 │   │   └── audit.py          # /api/v1/audit endpoints
 │   ├── engine/
 │   │   ├── cloner.py         # Git clone + cleanup
-│   │   ├── ast_auditor.py    # Determinism checks (AST)
+│   │   ├── setup_parsers.py  # AOT Tree-sitter parser builder
+│   │   ├── parsers.py        # Multi-language AST loaders
+│   │   ├── ast_auditor.py    # Determinism checks (Python, R, Julia, .ipynb)
 │   │   ├── path_auditor.py   # Hardcoded path detection
-│   │   ├── dependency_auditor.py  # Dependency analysis
+│   │   ├── dependency_auditor.py  # Dependency analysis (Python, R, Julia)
 │   │   ├── semantic_auditor.py    # LLM README audit
 │   │   ├── import_graph.py   # Cross-file import graph, cycle detection, flow tracing
 │   │   └── scoring.py        # Weighted score computation

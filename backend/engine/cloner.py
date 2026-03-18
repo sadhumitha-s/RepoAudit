@@ -33,6 +33,7 @@ def resolve_commit_hash(url: str) -> str:
         capture_output=True,
         text=True,
         timeout=30,
+        env={**os.environ, "GIT_TERMINAL_PROMPT": "0"},
     )
     if result.returncode != 0:
         stderr = result.stderr.strip()
