@@ -16,6 +16,7 @@ import logging
 from dataclasses import dataclass, field
 
 from models import Issue
+from engine.parsers import get_r_parser, get_julia_parser, extract_python_from_ipynb
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +79,9 @@ class DependencyAuditResult:
     has_setup_py: bool = False
     has_pyproject_toml: bool = False
     has_dockerfile: bool = False
+    has_r_description: bool = False
+    has_r_renv: bool = False
+    has_julia_project: bool = False
     pinned_count: int = 0
     unpinned_count: int = 0
     total_deps: int = 0
@@ -86,16 +90,65 @@ class DependencyAuditResult:
     missing_deps: set[str] = field(default_factory=set)
 
 
-def _extract_imports(filepath: str) -> set[str]:
-    """Extract top-level import module names from a Python file."""
-    try:
-        with open(filepath, "r", encoding="utf-8", errors="replace") as f:
-            source = f.read()
-        tree = ast.parse(source, filename=filepath)
-    except (OSError, SyntaxError):
-        return set()
+def _walk_tree_sitter(node, callback):
+    callback(node)
+    for child in node.children:
+        _walk_tree_sitter(child, callback)
 
+def _extract_imports(filepath: str) -> set[str]:
+    """Extract top-level import module names from a supported file."""
     imports: set[str] = set()
+    
+    if filepath.endswith(".ipynb"):
+        source = extract_python_from_ipynb(filepath)
+    else:
+        try:
+            with open(filepath, "r", encoding="utf-8", errors="replace") as f:
+                source = f.read()
+        except OSError:
+            return imports
+
+    if filepath.endswith(".r"):
+        parser = get_r_parser()
+        source_bytes = source.encode("utf8")
+        tree = parser.parse(source_bytes)
+        def visit_r(node):
+            if node.type == "call":
+                func_node = node.children[0]
+                func_name = source_bytes[func_node.start_byte:func_node.end_byte].decode("utf8")
+                if func_name in ("library", "require") and len(node.children) > 1:
+                    args_node = node.children[1]
+                    # Best effort string matching for simplicity
+                    text = source_bytes[args_node.start_byte:args_node.end_byte].decode("utf8")
+                    match = re.search(r'["\']?([A-Za-z0-9_.]+)["\']?', text)
+                    if match:
+                        imports.add(match.group(1))
+        _walk_tree_sitter(tree.root_node, visit_r)
+        return imports
+
+    if filepath.endswith(".jl"):
+        parser = get_julia_parser()
+        source_bytes = source.encode("utf8")
+        tree = parser.parse(source_bytes)
+        def visit_jl(node):
+            if node.type in ("using_statement", "import_statement"):
+                text = source_bytes[node.start_byte:node.end_byte].decode("utf8")
+                # text is `using Foo, Bar` or `using Foo: bar`
+                # strip `using ` and `import `
+                names = re.sub(r'^(using|import)\s+', '', text)
+                names = names.split(':')[0] # drop specific imports
+                for name in names.split(','):
+                    name = name.strip()
+                    if name:
+                        imports.add(name.split('.')[0])
+        _walk_tree_sitter(tree.root_node, visit_jl)
+        return imports
+
+    try:
+        tree = ast.parse(source, filename=filepath)
+    except SyntaxError:
+        return imports
+
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
@@ -154,6 +207,9 @@ def audit_directory(repo_path: str) -> tuple[DependencyAuditResult, list[Issue]]
         "setup.py": "has_setup_py",
         "pyproject.toml": "has_pyproject_toml",
         "Dockerfile": "has_dockerfile",
+        "DESCRIPTION": "has_r_description",
+        "renv.lock": "has_r_renv",
+        "Project.toml": "has_julia_project",
     }
 
     root_files = set(os.listdir(repo_path))
@@ -166,6 +222,9 @@ def audit_directory(repo_path: str) -> tuple[DependencyAuditResult, list[Issue]]
         or result.has_environment_yml
         or result.has_setup_py
         or result.has_pyproject_toml
+        or result.has_r_description
+        or result.has_r_renv
+        or result.has_julia_project
     )
 
     if not has_any_dep_file:
@@ -214,7 +273,7 @@ def audit_directory(repo_path: str) -> tuple[DependencyAuditResult, list[Issue]]
                 message="requirements.txt exists but contains no packages.",
             ))
 
-    # Collect all imports from Python files
+    # Collect all imports from supported files
     for dirpath, dirnames, filenames in os.walk(repo_path):
         dirnames[:] = [
             d for d in dirnames
@@ -222,7 +281,7 @@ def audit_directory(repo_path: str) -> tuple[DependencyAuditResult, list[Issue]]
             and d not in ("venv", ".venv", "env", "node_modules", "__pycache__")
         ]
         for fname in filenames:
-            if fname.endswith(".py"):
+            if fname.endswith((".py", ".ipynb", ".r", ".jl")):
                 fpath = os.path.join(dirpath, fname)
                 result.detected_imports |= _extract_imports(fpath)
 

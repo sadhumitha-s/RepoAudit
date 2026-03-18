@@ -130,7 +130,7 @@ class TestAuditDirectory:
         with open(os.path.join(tmp_repo, "README.md"), "w") as f:
             f.write("# Hello")
         _, issues = audit_directory(str(tmp_repo))
-        assert any("No Python files" in i.message for i in issues)
+        assert any("No supported source files" in i.message for i in issues)
 
     def test_random_ops_without_seed(self, tmp_repo, py_file):
         py_file("train.py", """

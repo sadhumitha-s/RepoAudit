@@ -35,6 +35,9 @@ def _score_environment(
         or dep_result.has_environment_yml
         or dep_result.has_pyproject_toml
         or dep_result.has_setup_py
+        or dep_result.has_r_description
+        or dep_result.has_r_renv
+        or dep_result.has_julia_project
     ):
         score -= 60
 

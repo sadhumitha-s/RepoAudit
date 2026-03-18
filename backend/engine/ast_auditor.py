@@ -12,6 +12,7 @@ import logging
 from dataclasses import dataclass, field
 
 from models import Issue
+from engine.parsers import get_r_parser, get_julia_parser, extract_python_from_ipynb
 
 logger = logging.getLogger(__name__)
 
@@ -152,24 +153,94 @@ class _SeedVisitor(ast.NodeVisitor):
         self._scope_stack.pop()
 
 
+def _walk_tree_sitter(node, callback):
+    callback(node)
+    for child in node.children:
+        _walk_tree_sitter(child, callback)
+
+def _audit_r_file(filepath: str, source: str) -> ASTAuditResult:
+    parser = get_r_parser()
+    source_bytes = source.encode("utf8")
+    tree = parser.parse(source_bytes)
+    
+    seed_calls = []
+    has_random_ops = False
+
+    def visit(node):
+        nonlocal has_random_ops
+        if node.type == "call":
+            func_node = node.children[0]
+            func_name = source_bytes[func_node.start_byte:func_node.end_byte].decode("utf8")
+            
+            if func_name == "set.seed":
+                seed_calls.append(SeedCall(
+                    target=func_name,
+                    line=node.start_point[0] + 1,
+                    reachable=True,
+                    scope="global"
+                ))
+            elif "runif" in func_name or "rnorm" in func_name or "sample" in func_name:
+                has_random_ops = True
+
+    _walk_tree_sitter(tree.root_node, visit)
+    return ASTAuditResult(file=filepath, seed_calls=seed_calls, has_random_ops=has_random_ops)
+
+def _audit_julia_file(filepath: str, source: str) -> ASTAuditResult:
+    parser = get_julia_parser()
+    source_bytes = source.encode("utf8")
+    tree = parser.parse(source_bytes)
+    
+    seed_calls = []
+    has_random_ops = False
+
+    def visit(node):
+        nonlocal has_random_ops
+        if node.type == "call_expression":
+            func_node = node.children[0]
+            func_name = source_bytes[func_node.start_byte:func_node.end_byte].decode("utf8")
+            
+            if func_name in ("Random.seed!", "seed!"):
+                seed_calls.append(SeedCall(
+                    target=func_name,
+                    line=node.start_point[0] + 1,
+                    reachable=True,
+                    scope="global"
+                ))
+            elif "rand" in func_name or "randn" in func_name:
+                has_random_ops = True
+
+    _walk_tree_sitter(tree.root_node, visit)
+    return ASTAuditResult(file=filepath, seed_calls=seed_calls, has_random_ops=has_random_ops)
+
 def audit_file(filepath: str) -> ASTAuditResult:
-    """Audit a single Python file for determinism."""
+    """Audit a single file for determinism."""
     rel_path = filepath
-    try:
-        with open(filepath, "r", encoding="utf-8", errors="replace") as f:
-            source = f.read()
-    except OSError as e:
-        return ASTAuditResult(file=rel_path, parse_error=str(e))
+    
+    if filepath.endswith(".ipynb"):
+        source = extract_python_from_ipynb(filepath)
+    else:
+        try:
+            with open(filepath, "r", encoding="utf-8", errors="replace") as f:
+                source = f.read()
+        except OSError as e:
+            return ASTAuditResult(file=rel_path, parse_error=str(e))
 
     if not source.strip():
         return ASTAuditResult(file=rel_path)
 
+    if filepath.endswith(".r"):
+        return _audit_r_file(filepath, source)
+    if filepath.endswith(".jl"):
+        return _audit_julia_file(filepath, source)
+
     try:
         tree = ast.parse(source, filename=filepath)
     except SyntaxError as e:
+        msg = getattr(e, "msg", str(e))
+        lineno = getattr(e, "lineno", "?")
         return ASTAuditResult(
             file=rel_path,
-            parse_error=f"SyntaxError at line {e.lineno}: {e.msg}",
+            parse_error=f"SyntaxError at line {lineno}: {msg}",
         )
 
     visitor = _SeedVisitor()
@@ -190,7 +261,7 @@ def audit_directory(repo_path: str) -> tuple[list[ASTAuditResult], list[Issue]]:
     results: list[ASTAuditResult] = []
     issues: list[Issue] = []
 
-    py_files: list[str] = []
+    target_files: list[str] = []
     for dirpath, dirnames, filenames in os.walk(repo_path):
         # Skip hidden dirs, venvs, test dirs
         dirnames[:] = [
@@ -199,14 +270,14 @@ def audit_directory(repo_path: str) -> tuple[list[ASTAuditResult], list[Issue]]:
             and d not in ("venv", ".venv", "env", "node_modules", "__pycache__")
         ]
         for fname in filenames:
-            if fname.endswith(".py"):
-                py_files.append(os.path.join(dirpath, fname))
+            if fname.endswith((".py", ".ipynb", ".r", ".jl")):
+                target_files.append(os.path.join(dirpath, fname))
 
-    if not py_files:
+    if not target_files:
         issues.append(Issue(
             rule="determinism",
             severity="info",
-            message="No Python files found in repository.",
+            message="No supported source files (.py, .ipynb, .r, .jl) found.",
         ))
         return results, issues
 
@@ -214,7 +285,7 @@ def audit_directory(repo_path: str) -> tuple[list[ASTAuditResult], list[Issue]]:
     any_reachable_seed = False
     unreachable_seeds: list[SeedCall] = []
 
-    for fpath in py_files:
+    for fpath in target_files:
         result = audit_file(fpath)
         results.append(result)
 

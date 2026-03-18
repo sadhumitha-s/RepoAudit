@@ -11,3 +11,5 @@ groq==0.4.2
 ruff==0.2.2
 pytest==7.4.4
 pytest-asyncio==0.23.4
+tree-sitter==0.21.3
+setuptools

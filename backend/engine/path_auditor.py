@@ -13,6 +13,7 @@ import logging
 from dataclasses import dataclass
 
 from models import Issue
+from engine.parsers import extract_python_from_ipynb
 
 logger = logging.getLogger(__name__)
 
@@ -73,11 +74,14 @@ def _is_allowed(value: str) -> bool:
 
 def audit_file(filepath: str) -> list[PathMatch]:
     """Scan a single Python file for hardcoded paths."""
-    try:
-        with open(filepath, "r", encoding="utf-8", errors="replace") as f:
-            source = f.read()
-    except OSError:
-        return []
+    if filepath.endswith(".ipynb"):
+        source = extract_python_from_ipynb(filepath)
+    else:
+        try:
+            with open(filepath, "r", encoding="utf-8", errors="replace") as f:
+                source = f.read()
+        except OSError:
+            return []
 
     if not source.strip():
         return []
@@ -141,7 +145,7 @@ def audit_directory(repo_path: str) -> list[Issue]:
             and d not in ("venv", ".venv", "env", "node_modules", "__pycache__")
         ]
         for fname in filenames:
-            if not fname.endswith(".py"):
+            if not fname.endswith((".py", ".ipynb", ".r", ".jl")):
                 continue
             fpath = os.path.join(dirpath, fname)
             rel = os.path.relpath(fpath, repo_path)

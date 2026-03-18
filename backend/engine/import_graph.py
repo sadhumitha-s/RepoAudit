@@ -13,6 +13,7 @@ import logging
 from dataclasses import dataclass, field
 
 from models import Issue
+from engine.parsers import extract_python_from_ipynb
 
 logger = logging.getLogger(__name__)
 
@@ -225,11 +226,14 @@ def _parse_module(filepath: str, repo_path: str) -> ModuleInfo | None:
     rel_path = os.path.relpath(filepath, repo_path)
     module_name = _filepath_to_module(filepath, repo_path)
 
-    try:
-        with open(filepath, "r", encoding="utf-8", errors="replace") as f:
-            source = f.read()
-    except OSError:
-        return None
+    if filepath.endswith(".ipynb"):
+        source = extract_python_from_ipynb(filepath)
+    else:
+        try:
+            with open(filepath, "r", encoding="utf-8", errors="replace") as f:
+                source = f.read()
+        except OSError:
+            return None
 
     if not source.strip():
         return ModuleInfo(
@@ -277,7 +281,7 @@ def build_import_graph(repo_path: str) -> ImportGraphResult:
             and d not in ("venv", ".venv", "env", "node_modules", "__pycache__")
         ]
         for fname in filenames:
-            if fname.endswith(".py"):
+            if fname.endswith((".py", ".ipynb")):
                 py_files.append(os.path.join(dirpath, fname))
 
     if not py_files:

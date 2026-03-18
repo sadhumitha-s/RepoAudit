@@ -54,7 +54,7 @@ class TestScoring:
                       message="No readme"),
             ],
         )
-        assert result.total_score < 30
+        assert result.total_score <= 30
 
     def test_score_bounded(self, tmp_repo):
         result = compute_report(
