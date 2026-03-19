@@ -7,7 +7,7 @@ pydantic==2.6.1
 pydantic-settings==2.1.0
 supabase==2.11.0
 python-dotenv==1.0.1
-groq==0.4.2
+openai>=1.0.0
 ruff==0.2.2
 pytest==7.4.4
 pytest-asyncio==0.23.4

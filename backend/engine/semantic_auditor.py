@@ -12,7 +12,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 
-from groq import Groq
+from openai import OpenAI
 from config import get_settings
 from models import Issue
 
@@ -103,13 +103,16 @@ def _get_repo_file_listing(repo_path: str) -> set[str]:
 def _query_llm(readme_content: str) -> dict:
     """Query Groq LLM to extract structured info from README."""
     settings = get_settings()
-    if not settings.groq_api_key:
-        raise RuntimeError("GROQ_API_KEY is not configured")
+    if not settings.hf_api_key:
+        raise RuntimeError("HF_API_KEY is not configured")
 
-    client = Groq(api_key=settings.groq_api_key)
+    client = OpenAI(
+        base_url="https://api-inference.huggingface.co/v1/",
+        api_key=settings.hf_api_key
+    )
 
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="meta-llama/Llama-3.3-70B-Instruct",
         messages=[
             {"role": "system", "content": _SYSTEM_PROMPT},
             {"role": "user", "content": readme_content},

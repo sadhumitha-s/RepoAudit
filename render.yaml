@@ -11,7 +11,7 @@ services:
         sync: false
       - key: SUPABASE_KEY
         sync: false
-      - key: GROQ_API_KEY
+      - key: HF_API_KEY
         sync: false
       - key: REDIS_URL
         sync: false

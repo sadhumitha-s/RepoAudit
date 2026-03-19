@@ -27,7 +27,7 @@ RepoAudit scans public GitHub ML repositories and produces a **reproducibility s
 | Backend API | FastAPI (Python 3.11+) |
 | Task Queue | Celery + Valkey (local) / Upstash Redis (production) |
 | Analysis | Python `ast` module, Tree-sitter (R, Julia), Jupyter parsing, cross-file import graph |
-| AI Layer | Groq API (Llama-3.3-70B) |
+| AI Layer | Hugging Face API (Llama-3.3-70B) |
 | Database | PostgreSQL via Supabase |
 | Cache | Valkey protocol cache (local Valkey, Upstash Redis in production) |
 | Deployment | Render (backend), Vercel (frontend) |
@@ -101,7 +101,7 @@ RepoAudit/
 - Node.js 20+
 - Valkey (local dev) or [Upstash](https://upstash.com) account (free tier, production)
 - [Supabase](https://supabase.com) account (free tier)
-- [Groq](https://console.groq.com) API key (free tier)
+- [Hugging Face](https://huggingface.co/settings/tokens) API key (free tier)
 
 ### Database Setup
 
@@ -134,7 +134,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_repo ON audits(repo_id);
 ```bash
 # 1. Configure environment
 cp backend/.env.example backend/.env
-# Edit backend/.env with your Supabase + Groq keys
+# Edit backend/.env with your Supabase + Hugging Face keys
 
 # 2. Start everything
 docker compose up --build
@@ -178,7 +178,7 @@ RepoAudit runs on an entirely free stack:
 | Frontend | [Vercel](https://vercel.com) | $0 |
 | Redis (cache + broker) | [Upstash](https://upstash.com) | $0 |
 | Database | [Supabase](https://supabase.com) | $0 |
-| LLM | [Groq](https://console.groq.com) | $0 |
+| LLM | [Hugging Face](https://huggingface.co) | $0 |
 
 ### Deploy with Render Blueprint
 
@@ -190,7 +190,7 @@ RepoAudit runs on an entirely free stack:
    |-----|-------|
    | `SUPABASE_URL` | Your Supabase project URL |
    | `SUPABASE_KEY` | Your Supabase anon key |
-   | `GROQ_API_KEY` | Your Groq API key |
+   | `HF_API_KEY` | Your Hugging Face API key |
    | `REDIS_URL` | `rediss://default:...@....upstash.io:6379` |
    | `CELERY_BROKER_URL` | Same Upstash URL |
    | `CELERY_RESULT_BACKEND` | Same Upstash URL |
