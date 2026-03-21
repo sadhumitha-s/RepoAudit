@@ -96,6 +96,7 @@ def _score_determinism(
 def _score_datasets(
     path_issues: list[Issue],
     semantic_result: SemanticAuditResult,
+    provenance_issues: list[Issue],
 ) -> CategoryScore:
     """Score dataset handling (hardcoded paths, data documentation)."""
     score = 100.0
@@ -107,6 +108,16 @@ def _score_datasets(
 
     if semantic_result.missing_data_dirs:
         score -= len(semantic_result.missing_data_dirs) * 15
+
+    # Penalize provenance issues
+    for pi in provenance_issues:
+        if pi.severity == "critical":
+            score -= 30
+        elif pi.severity == "warning":
+            score -= 15
+        elif pi.severity == "info":
+            score -= 5
+        issues.append(pi)
 
     score = max(0, min(100, score))
     return CategoryScore(
@@ -228,15 +239,18 @@ def compute_report(
     semantic_result: SemanticAuditResult,
     semantic_issues: list[Issue],
     graph_issues: list[Issue] | None = None,
+    provenance_issues: list[Issue] | None = None,
 ) -> AuditReport:
     """Compute the full audit report with weighted scores."""
     if graph_issues is None:
         graph_issues = []
+    if provenance_issues is None:
+        provenance_issues = []
 
     categories = [
         _score_environment(dep_result, dep_issues),
         _score_determinism(det_issues, graph_issues),
-        _score_datasets(path_issues, semantic_result),
+        _score_datasets(path_issues, semantic_result, provenance_issues),
         _score_semantic(semantic_result, semantic_issues),
         _score_execution(repo_path, graph_issues),
         _score_documentation(semantic_result, semantic_issues),
