@@ -230,6 +230,12 @@ curl -X POST https://repoaudit-api.onrender.com/api/v1/audit \
 2. If that hash exists in Upstash Redis (L1) or Supabase Postgres (L2), the cached report is returned instantly
 3. Otherwise, a Celery task clones the repo (depth=1) and runs the full analysis pipeline
 
+## Features
+
+- **Data Provenance Auditing**: Detects how data is loaded, checks URL liveness, flags gated datasets, and identifies non-deterministic preprocessing.
+- **Configuration Drift Detection**: Catches discrepancies between claimed hyperparameters in README and actual values in config files or code defaults.
+- **Reproducibility Scoring**: A weighted 0-100 score based on environment, determinism, datasets, and semantic alignment.
+
 ## Score History
 
 When a repository is audited multiple times, RepoAudit tracks score progression over time. The audit detail page renders an interactive line chart showing:

@@ -142,6 +142,7 @@ def _score_datasets(
 def _score_semantic(
     semantic_result: SemanticAuditResult,
     semantic_issues: list[Issue],
+    drift_issues: list[Issue] | None = None,
 ) -> CategoryScore:
     """Score semantic alignment between README and code."""
     score = 100.0
@@ -155,12 +156,26 @@ def _score_semantic(
         if semantic_result.llm_error:
             score = max(score, 50)
 
+    # Penalize configuration drift
+    if drift_issues:
+        for di in drift_issues:
+            if di.severity == "critical":
+                score -= 20
+            elif di.severity == "warning":
+                score -= 10
+            elif di.severity == "info":
+                score -= 2
+
+    all_semantic_issues = [i for i in semantic_issues if i.rule == "semantic"]
+    if drift_issues:
+        all_semantic_issues.extend(drift_issues)
+
     score = max(0, min(100, score))
     return CategoryScore(
         name="semantic",
         weight=CATEGORY_WEIGHTS["semantic"],
         score=round(score, 1),
-        issues=[i for i in semantic_issues if i.rule == "semantic"],
+        issues=all_semantic_issues,
     )
 
 
@@ -252,6 +267,7 @@ def compute_report(
     graph_issues: list[Issue] | None = None,
     provenance_issues: list[Issue] | None = None,
     fingerprint_issues: list[Issue] | None = None,
+    drift_issues: list[Issue] | None = None,
 ) -> AuditReport:
     """Compute the full audit report with weighted scores."""
     if graph_issues is None:
@@ -263,7 +279,7 @@ def compute_report(
         _score_environment(dep_result, dep_issues, fingerprint_issues),
         _score_determinism(det_issues, graph_issues),
         _score_datasets(path_issues, semantic_result, provenance_issues),
-        _score_semantic(semantic_result, semantic_issues),
+        _score_semantic(semantic_result, semantic_issues, drift_issues),
         _score_execution(repo_path, graph_issues),
         _score_documentation(semantic_result, semantic_issues),
     ]
