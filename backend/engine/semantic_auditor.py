@@ -107,7 +107,7 @@ def _query_llm(readme_content: str) -> dict:
         raise RuntimeError("HF_API_KEY is not configured")
 
     client = OpenAI(
-        base_url="https://api-inference.huggingface.co/v1/",
+        base_url="https://router.huggingface.co/hf-inference/v1/",
         api_key=settings.hf_api_key
     )
 
