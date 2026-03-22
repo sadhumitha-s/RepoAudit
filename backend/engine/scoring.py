@@ -26,6 +26,7 @@ CATEGORY_WEIGHTS: dict[str, float] = {
 def _score_environment(
     dep_result: DependencyAuditResult,
     env_issues: list[Issue],
+    fingerprint_issues: list[Issue] | None = None,
 ) -> CategoryScore:
     """Score environment reproducibility (requirements, pinning)."""
     score = 100.0
@@ -53,6 +54,16 @@ def _score_environment(
     if dep_result.missing_deps:
         penalty = min(len(dep_result.missing_deps) * 5, 20)
         score -= penalty
+
+    # Penalize fingerprinting issues
+    if fingerprint_issues:
+        for fi in fingerprint_issues:
+            if fi.severity == "critical":
+                score -= 30
+            elif fi.severity == "warning":
+                score -= 10
+            elif fi.severity == "info":
+                score -= 2
 
     score = max(0, min(100, score))
     return CategoryScore(
@@ -240,6 +251,7 @@ def compute_report(
     semantic_issues: list[Issue],
     graph_issues: list[Issue] | None = None,
     provenance_issues: list[Issue] | None = None,
+    fingerprint_issues: list[Issue] | None = None,
 ) -> AuditReport:
     """Compute the full audit report with weighted scores."""
     if graph_issues is None:
@@ -248,7 +260,7 @@ def compute_report(
         provenance_issues = []
 
     categories = [
-        _score_environment(dep_result, dep_issues),
+        _score_environment(dep_result, dep_issues, fingerprint_issues),
         _score_determinism(det_issues, graph_issues),
         _score_datasets(path_issues, semantic_result, provenance_issues),
         _score_semantic(semantic_result, semantic_issues),

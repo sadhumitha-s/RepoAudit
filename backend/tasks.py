@@ -11,7 +11,7 @@ from worker import celery_app
 from config import get_settings
 from db import get_db
 from engine import cloner, ast_auditor, path_auditor, dependency_auditor
-from engine import semantic_auditor, scoring, import_graph, data_provenance_auditor
+from engine import semantic_auditor, scoring, import_graph, data_provenance_auditor, hardware_fingerprinting_auditor
 from models import AuditStatus
 
 logger = logging.getLogger(__name__)
@@ -58,6 +58,9 @@ def run_audit(self, audit_id: str, repo_url: str, commit_hash: str) -> dict:
         # Phase 2.6: Data Provenance Audit
         provenance_result, provenance_issues = data_provenance_auditor.audit_directory(clone_path)
 
+        # Phase 2.7: Hardware Fingerprinting Audit
+        fingerprint_result, fingerprint_issues = hardware_fingerprinting_auditor.audit_directory(clone_path)
+
         # Phase 3: Semantic Audit
         _update_status(audit_id, AuditStatus.SEMANTIC_AUDIT)
         sem_result, sem_issues = semantic_auditor.audit_directory(clone_path)
@@ -74,6 +77,7 @@ def run_audit(self, audit_id: str, repo_url: str, commit_hash: str) -> dict:
             semantic_issues=sem_issues,
             graph_issues=graph_issues,
             provenance_issues=provenance_issues,
+            fingerprint_issues=fingerprint_issues,
         )
 
         report_dict = report.model_dump()

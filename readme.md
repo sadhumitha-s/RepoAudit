@@ -12,9 +12,9 @@ RepoAudit scans public GitHub ML repositories and produces a **reproducibility s
 
 | Category | Weight | What's Checked |
 |----------|--------|----------------|
-| Environment | 20% | Pinned `requirements.txt`, `environment.yml`, or `Dockerfile` |
-| Determinism | 20% | AST-verified seeding for PyTorch, NumPy, Random, TensorFlow |
-| Datasets | 20% | Absence of hardcoded local paths, documented download links |
+| Environment | 20% | Pinned dependencies, Dockerfile, **Hardware Fingerprinting Detection** |
+| Determinism | 20% | AST-verified seeding, **Non-deterministic shuffling detection** |
+| Datasets | 20% | No hardcoded paths, **Data Provenance (URL liveness, gated datasets)** |
 | Semantic | 20% | AI-verified alignment between README and repo structure |
 | Execution | 10% | Presence of standard entry points (`train.py`, `Makefile`, etc.) |
 | Documentation | 10% | README sections for Installation, Usage, Datasets |
@@ -58,6 +58,8 @@ RepoAudit/
 │   │   ├── dependency_auditor.py  # Dependency analysis (Python, R, Julia)
 │   │   ├── semantic_auditor.py    # LLM README audit
 │   │   ├── import_graph.py   # Cross-file import graph, cycle detection, flow tracing
+│   │   ├── data_provenance_auditor.py # Data loading, URL liveness, gated datasets
+│   │   ├── hardware_fingerprinting_auditor.py # Anti-sandbox / Hardware identification
 │   │   └── scoring.py        # Weighted score computation
 │   └── tests/
 │       ├── test_ast_auditor.py
