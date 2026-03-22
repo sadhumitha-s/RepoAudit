@@ -119,7 +119,7 @@ def _query_llm_for_claims(readme_content: str) -> dict:
         return {"hyperparameters": {}}
 
     client = OpenAI(
-        base_url="https://router.huggingface.co/hf-inference/v1/",
+        base_url="https://router.huggingface.co/v1/",
         api_key=settings.hf_api_key
     )
 
