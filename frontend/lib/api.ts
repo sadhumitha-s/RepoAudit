@@ -20,6 +20,7 @@ export interface AuditReport {
   categories: CategoryScore[];
   total_score: number;
   summary: string;
+  patch?: string;
 }
 
 export interface AuditResponse {

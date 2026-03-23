@@ -26,8 +26,9 @@ RepoAudit scans public GitHub ML repositories and produces a **reproducibility s
 | Frontend | Next.js 15, Tailwind CSS, Recharts, Lucide React |
 | Backend API | FastAPI (Python 3.11+) |
 | Task Queue | Celery + Valkey (local) / Upstash Redis (production) |
-| Analysis | Python `ast` module, Tree-sitter (R, Julia), Jupyter parsing, cross-file import graph |
+| Analysis | Python `ast` module, **`libcst` (for deterministic rewriting)**, Tree-sitter (R, Julia), Jupyter parsing, cross-file import graph |
 | AI Layer | Hugging Face API (Llama-3.3-70B) |
+| Remediation | Native Python `libcst` & `difflib` |
 | Database | PostgreSQL via Supabase |
 | Cache | Valkey protocol cache (local Valkey, Upstash Redis in production) |
 | Deployment | Render (backend), Vercel (frontend) |
@@ -60,12 +61,15 @@ RepoAudit/
 │   │   ├── import_graph.py   # Cross-file import graph, cycle detection, flow tracing
 │   │   ├── data_provenance_auditor.py # Data loading, URL liveness, gated datasets
 │   │   ├── hardware_fingerprinting_auditor.py # Anti-sandbox / Hardware identification
+│   │   ├── configuration_drift_auditor.py # Hyperparameter discrepancy detection
+│   │   ├── auto_remediator.py # AST-powered deterministic code-mod engine
 │   │   └── scoring.py        # Weighted score computation
 │   └── tests/
 │       ├── test_ast_auditor.py
 │       ├── test_path_auditor.py
 │       ├── test_dependency_auditor.py
 │       ├── test_import_graph.py
+│       ├── test_auto_remediator.py # AST transformation tests
 │       └── test_scoring.py
 ├── frontend/
 │   ├── Dockerfile
@@ -232,6 +236,7 @@ curl -X POST https://repoaudit-api.onrender.com/api/v1/audit \
 
 ## Features
 
+- **Deterministic Auto-Remediation Engine**: Powered by offline AST manipulation, it instantly fixes high-confidence reproducibility blockers by injecting missing seeds, dynamically pinning unpinned dependencies, and rewriting hardcoded paths, outputting a concrete `.patch` file natively without LLMs.
 - **Data Provenance Auditing**: Detects how data is loaded, checks URL liveness, flags gated datasets, and identifies non-deterministic preprocessing.
 - **Configuration Drift Detection**: Catches discrepancies between claimed hyperparameters in README and actual values in config files or code defaults.
 - **Reproducibility Scoring**: A weighted 0-100 score based on environment, determinism, datasets, and semantic alignment.

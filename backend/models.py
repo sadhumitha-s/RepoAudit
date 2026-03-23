@@ -54,6 +54,8 @@ class AuditReport(BaseModel):
     categories: list[CategoryScore]
     total_score: float = Field(ge=0, le=100)
     summary: str = ""
+    patch: str | None = None
+
 
 
 class AuditResponse(BaseModel):

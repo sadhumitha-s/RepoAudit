@@ -169,6 +169,36 @@ export default function HomePage() {
           {parsed && <ScoreHistory owner={parsed.owner} repo={parsed.repo} />}
 
           <FixFeed issues={allIssues} />
+
+          {audit.report.patch && (
+            <div className="border-2 border-white bg-black p-6 shadow-neo mt-8 text-left">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                <div>
+                  <h2 className="text-xl font-black uppercase tracking-wide text-white">Auto-Remediation Patch</h2>
+                  <p className="text-sm font-bold text-[#a1a1aa] mt-1 uppercase">Apply this patch to automatically resolve findings deterministically via AST modification.</p>
+                </div>
+                <button
+                  onClick={() => {
+                    const blob = new Blob([audit.report!.patch!], { type: "text/plain" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "concrete.patch";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="neo-button px-4 py-2 text-sm bg-brand-accent text-black"
+                >
+                  DOWNLOAD PATCH
+                </button>
+              </div>
+              <pre className="p-4 bg-[#111] text-[#e5e5e5] text-sm overflow-x-auto border-2 border-white font-mono max-h-96 overflow-y-auto">
+                {audit.report.patch}
+              </pre>
+            </div>
+          )}
         </div>
       )}
     </div>

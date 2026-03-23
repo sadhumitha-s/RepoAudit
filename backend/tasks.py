@@ -84,6 +84,17 @@ def run_audit(self, audit_id: str, repo_url: str, commit_hash: str) -> dict:
             drift_issues=drift_issues,
         )
 
+        # Phase 4.5: Auto-Remediation
+        from engine import auto_remediator
+        all_issues = []
+        all_issues.extend(det_issues)
+        all_issues.extend(path_issues)
+        all_issues.extend(dep_issues)
+        # We also have provenance, fingerprinting, drift, but remediation targets det, path, dep.
+        
+        patch_str = auto_remediator.remediate_issues(clone_path, all_issues)
+        report.patch = patch_str
+
         report_dict = report.model_dump()
 
         # Store in database
