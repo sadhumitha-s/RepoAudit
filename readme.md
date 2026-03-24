@@ -228,6 +228,8 @@ curl -X POST https://repoaudit-api.onrender.com/api/v1/audit \
   -d '{"url": "https://github.com/owner/repo"}'
 ```
 
+*Note: You can also submit research paper URLs (e.g., from arXiv, Papers With Code, NeurIPS) and RepoAudit will automatically resolve them to their corresponding GitHub repository.*
+
 ## How Caching Works
 
 1. On submission, the API resolves the repo's latest `commit_hash` via `git ls-remote`

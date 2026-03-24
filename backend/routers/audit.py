@@ -13,6 +13,7 @@ from fastapi import APIRouter, HTTPException, Query
 from config import get_settings
 from db import get_db
 from engine.cloner import resolve_commit_hash
+from engine.url_resolver import resolve_url
 from models import (
     AuditRequest,
     AuditResponse,
@@ -38,7 +39,10 @@ def _get_redis() -> redis_lib.Redis:
 @router.post("/audit", response_model=AuditResponse)
 async def submit_audit(req: AuditRequest):
     """Submit a repository for audit. Returns cached result or queues a new task."""
-    url = req.url
+    try:
+        url = resolve_url(req.url)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     # Step 1: Resolve latest commit hash
     try:
