@@ -56,20 +56,20 @@ RepoAudit/
 │   │   ├── parsers.py        # Multi-language AST loaders
 │   │   ├── ast_auditor.py    # Determinism checks (Python, R, Julia, .ipynb)
 │   │   ├── path_auditor.py   # Hardcoded path detection
-│   │   ├── dependency_auditor.py  # Dependency analysis (Python, R, Julia)
-│   │   ├── semantic_auditor.py    # LLM README audit
-│   │   ├── import_graph.py   # Cross-file import graph, cycle detection, flow tracing
-│   │   ├── data_provenance_auditor.py # Data loading, URL liveness, gated datasets
+│   │   ├── dependency_auditor.py              # Dependency analysis (Python, R, Julia)
+│   │   ├── semantic_auditor.py                # LLM README audit
+│   │   ├── import_graph.py                    # Cross-file import graph, cycle detection, flow tracing
+│   │   ├── data_provenance_auditor.py         # Data loading, URL liveness, gated datasets
 │   │   ├── hardware_fingerprinting_auditor.py # Anti-sandbox / Hardware identification
-│   │   ├── configuration_drift_auditor.py # Hyperparameter discrepancy detection
-│   │   ├── auto_remediator.py # AST-powered deterministic code-mod engine
-│   │   └── scoring.py        # Weighted score computation
+│   │   ├── configuration_drift_auditor.py     # Hyperparameter discrepancy detection
+│   │   ├── auto_remediator.py                 # AST-powered deterministic code-mod engine
+│   │   └── scoring.py                         # Weighted score computation
 │   └── tests/
 │       ├── test_ast_auditor.py
 │       ├── test_path_auditor.py
 │       ├── test_dependency_auditor.py
 │       ├── test_import_graph.py
-│       ├── test_auto_remediator.py # AST transformation tests
+│       ├── test_auto_remediator.py 
 │       └── test_scoring.py
 ├── frontend/
 │   ├── Dockerfile
