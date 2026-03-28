@@ -2,7 +2,12 @@
 
 Automated reproducibility analysis for machine learning research repositories (supporting Python, R, Julia, and Jupyter Notebooks) using AST-based static analysis and LLM-powered semantic auditing.
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![CI](https://github.com/sadhumitha-s/RepoAudit/actions/workflows/repoaudit.yml/badge.svg?label=CI)](https://github.com/sadhumitha-s/RepoAudit/actions/workflows/repoaudit.yml) 
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE) 
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/) 
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js&logoColor=white)](https://nextjs.org/) 
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/) 
+[![GitHub stars](https://img.shields.io/github/stars/sadhumitha-s/RepoAudit?style=social)](https://github.com/sadhumitha-s/RepoAudit/stargazers)
 
 **Live:** [repo-audit.vercel.app](https://repo-audit.vercel.app) · **API:** [repoaudit-api.onrender.com](https://repoaudit-api.onrender.com/health)
 
@@ -249,77 +254,22 @@ curl -X POST https://repoaudit-api.onrender.com/api/v1/audit \
 - **Execution Replay Verification (Lightweight)**: Goes beyond static analysis by performing a 4-tier reproduction check in a **Bubblewrap sandbox** (L0: Deps Install, L1: Import Success, L2: Entry point runs for >5s, L3: Output Production), providing a pass/fail signal for the actual reproducibility of the claimed workflow.
 - **Reproducibility Scoring**: A weighted 0-100 score based on environment, determinism, datasets, and semantic alignment.
 
-## Score History
-
-When a repository is audited multiple times, RepoAudit tracks score progression over time. The audit detail page renders an interactive line chart showing:
-
-- **Total score** trend across audits
-- **Per-category breakdown** (togglable) for environment, determinism, datasets, semantic, execution, and documentation
-- Commit hash labels on hover
-
-```bash
-curl https://repoaudit-api.onrender.com/api/v1/audit/history/owner/repo?limit=20
-```
-
 ## GitHub Action
 
-RepoAudit ships as a reusable GitHub Action.  
-
-This repository self-tests the action with `uses: ./`, while external repositories should use `uses: sadhumitha-s/RepoAudit@v1.0.0`.
-
-### Recommended usage (external repos)
+RepoAudit can be integrated into your CI/CD pipeline to automatically audit PRs.
 
 ```yaml
-name: RepoAudit
-on:
-  pull_request:
-    branches: [main]
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
-jobs:
-  audit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
       - uses: sadhumitha-s/RepoAudit@v1.0.0
-        id: audit
         with:
           api-url: https://repoaudit-api.onrender.com
-          threshold: "50"
-          timeout-seconds: "600"
-          poll-interval-seconds: "5"
-          request-timeout-seconds: "180"
-          request-retries: "4"
-      - run: echo "Score — ${{ steps.audit.outputs.score }}/100"
+          threshold: "70"
 ```
 
-### Action Inputs
 
-| Input | Required | Default | Description |
-|-------|----------|---------|-------------|
-| `api-url` | Yes | — | Base URL of your RepoAudit API |
-| `repo-url` | No | Current repo | Override the repo URL to audit |
-| `threshold` | No | `0` | Minimum score to pass the build |
-| `timeout-seconds` | No | `600` | Max total wait for audit completion |
-| `poll-interval-seconds` | No | `5` | Status poll interval |
-| `request-timeout-seconds` | No | `180` | Per HTTP request timeout |
-| `request-retries` | No | `4` | Retries for transient network/gateway failures |
+## Documentation
 
-### Action Outputs
-
-| Output | Description |
-|--------|-------------|
-| `score` | Reproducibility score (0–100) |
-| `audit-id` | Unique audit ID |
-| `status` | `completed` or `failed` |
-| `report-json` | Full report JSON |
-
-### CI modes in this repository
-
-The workflow in .github/workflows/repoaudit.yml includes:
-- PR gate (`threshold: 50`)
-- Manual strict+relaxed test matrix
-- Monthly smoke run (`threshold: 0`)
+- [**System Architecture**](docs/architecture.md) — Detailed architecture and component interaction.
+- [**Scoring Methodology**](docs/scoring-methodology.md) — Deep dive into how reproducibility scores are calculated.
+- [**API Reference**](docs/api-reference.md) — Comprehensive guide for all API endpoints.
+- [**Development Guide**](docs/development-guide.md) — Setup for local development and contributing.
+- [**GitHub Action Usage**](docs/github-action-usage.md) — Advanced configuration for the CI action.
