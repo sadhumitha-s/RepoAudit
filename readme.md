@@ -12,11 +12,11 @@ RepoAudit scans public GitHub ML repositories and produces a **reproducibility s
 
 | Category | Weight | What's Checked |
 |----------|--------|----------------|
-| Environment | 20% | Pinned dependencies, Dockerfile, **Hardware Fingerprinting Detection** |
+| Environment | 15% | Pinned dependencies, Dockerfile, **Hardware Fingerprinting Detection** |
 | Determinism | 20% | AST-verified seeding, **Non-deterministic shuffling detection**, Notebook out-of-order execution, cell mutation |
-| Datasets | 20% | No hardcoded paths, **Data Provenance (URL liveness, gated datasets)** |
+| Datasets | 15% | No hardcoded paths, **Data Provenance (URL liveness, gated datasets)** |
 | Semantic | 20% | AI-verified alignment between README and repo structure |
-| Execution | 10% | Presence of standard entry points (`train.py`, `Makefile`, etc.) |
+| Execution | 20% | **L0–L3 Replay Verification via Bubblewrap**, Presence of standard entry points (`train.py`, `Makefile`, etc.) |
 | Documentation | 10% | README sections for Installation, Usage, Datasets |
 
 ## Tech Stack
@@ -55,7 +55,7 @@ RepoAudit/
 │   │   ├── setup_parsers.py  # AOT Tree-sitter parser builder
 │   │   ├── parsers.py        # Multi-language AST loaders
 │   │   ├── ast_auditor.py    # Determinism checks (Python, R, Julia, .ipynb)
-│   │   ├── notebook_analyzer.py # Deep analysis for Jupyter Notebooks
+│   │   ├── notebook_analyzer.py   # Deep analysis for Jupyter Notebooks
 │   │   ├── path_auditor.py   # Hardcoded path detection
 │   │   ├── dependency_auditor.py              # Dependency analysis (Python, R, Julia)
 │   │   ├── semantic_auditor.py                # LLM README audit
@@ -63,6 +63,8 @@ RepoAudit/
 │   │   ├── data_provenance_auditor.py         # Data loading, URL liveness, gated datasets
 │   │   ├── hardware_fingerprinting_auditor.py # Anti-sandbox / Hardware identification
 │   │   ├── configuration_drift_auditor.py     # Hyperparameter discrepancy detection
+│   │   ├── sandbox.py                         # Bubblewrap orchestration
+│   │   ├── replay_auditor.py                  # Dynamic L0–L3 execution verification
 │   │   ├── auto_remediator.py                 # AST-powered deterministic code-mod engine
 │   │   └── scoring.py                         # Weighted score computation
 │   └── tests/
@@ -70,6 +72,7 @@ RepoAudit/
 │       ├── test_path_auditor.py
 │       ├── test_dependency_auditor.py
 │       ├── test_import_graph.py
+│       ├── test_replay_auditor.py
 │       ├── test_auto_remediator.py 
 │       └── test_scoring.py
 ├── frontend/
@@ -243,6 +246,7 @@ curl -X POST https://repoaudit-api.onrender.com/api/v1/audit \
 - **Data Provenance Auditing**: Detects how data is loaded, checks URL liveness, flags gated datasets, and identifies non-deterministic preprocessing.
 - **Configuration Drift Detection**: Catches discrepancies between claimed hyperparameters in README and actual values in config files or code defaults.
 - **Notebook-Specific Deep Analysis**: Goes beyond basic extraction to detect out-of-order cell execution (variable used before definition in earlier cells), identifies global state mutations (top-level assignments/imports), verifies "Restart and Run All" compatibility, and flags non-reproducible runtime dependency installations (e.g., `!pip install`).
+- **Execution Replay Verification (Lightweight)**: Goes beyond static analysis by performing a 4-tier reproduction check in a **Bubblewrap sandbox** (L0: Deps Install, L1: Import Success, L2: Entry point runs for >5s, L3: Output Production), providing a pass/fail signal for the actual reproducibility of the claimed workflow.
 - **Reproducibility Scoring**: A weighted 0-100 score based on environment, determinism, datasets, and semantic alignment.
 
 ## Score History

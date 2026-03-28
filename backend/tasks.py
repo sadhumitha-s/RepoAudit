@@ -11,7 +11,7 @@ from worker import celery_app
 from config import get_settings
 from db import get_db
 from engine import cloner, ast_auditor, path_auditor, dependency_auditor
-from engine import semantic_auditor, scoring, import_graph, data_provenance_auditor, hardware_fingerprinting_auditor, configuration_drift_auditor
+from engine import semantic_auditor, scoring, import_graph, data_provenance_auditor, hardware_fingerprinting_auditor, configuration_drift_auditor, replay_auditor
 from models import AuditStatus
 
 logger = logging.getLogger(__name__)
@@ -67,6 +67,14 @@ def run_audit(self, audit_id: str, repo_url: str, commit_hash: str) -> dict:
         # Phase 3: Semantic Audit
         _update_status(audit_id, AuditStatus.SEMANTIC_AUDIT)
         sem_result, sem_issues = semantic_auditor.audit_directory(clone_path)
+        
+        # Phase 3.5: Execution Replay Verification
+        # We reuse FINALIZING status for this phase
+        _update_status(audit_id, AuditStatus.FINALIZING)
+        replay_result, replay_issues = replay_auditor.audit_directory(
+            clone_path, sem_result.claimed_commands
+        )
+        sem_issues.extend(replay_issues)
 
         # Phase 4: Scoring
         _update_status(audit_id, AuditStatus.FINALIZING)
@@ -82,6 +90,7 @@ def run_audit(self, audit_id: str, repo_url: str, commit_hash: str) -> dict:
             provenance_issues=provenance_issues,
             fingerprint_issues=fingerprint_issues,
             drift_issues=drift_issues,
+            replay_result=replay_result,
         )
 
         # Phase 4.5: Auto-Remediation

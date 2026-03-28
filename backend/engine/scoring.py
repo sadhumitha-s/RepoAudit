@@ -11,14 +11,15 @@ import os
 from models import CategoryScore, AuditReport, Issue
 from engine.dependency_auditor import DependencyAuditResult
 from engine.semantic_auditor import SemanticAuditResult
+from engine.replay_auditor import ExecutionReplayResult
 
 
 CATEGORY_WEIGHTS: dict[str, float] = {
-    "environment": 0.20,
+    "environment": 0.15,
     "determinism": 0.20,
-    "datasets": 0.20,
+    "datasets": 0.15,
     "semantic": 0.20,
-    "execution": 0.10,
+    "execution": 0.20,
     "documentation": 0.10,
 }
 
@@ -182,8 +183,9 @@ def _score_semantic(
 def _score_execution(
     repo_path: str,
     graph_issues: list[Issue],
+    replay_result: ExecutionReplayResult | None = None,
 ) -> CategoryScore:
-    """Score presence of entry points + execution flow health."""
+    """Score presence of entry points + dynamic execution replay verification."""
     score = 0.0
     issues: list[Issue] = []
 
@@ -210,15 +212,18 @@ def _score_execution(
             fix="Add a main entry point like `train.py` or `main.py`.",
         ))
 
-    # Penalize circular imports (affects execution reliability)
-    circular = [i for i in graph_issues if i.rule == "circular_import"]
-    score -= len(circular) * 15
-    issues.extend(circular)
-
-    # Penalize missing execution flow
-    flow_issues = [i for i in graph_issues if i.rule == "execution_flow"]
-    score -= len(flow_issues) * 10
-    issues.extend(flow_issues)
+    # Dynamic Replay Score (Levels L0-L3)
+    if replay_result and replay_result.highest_level >= 0:
+        # L0: 25, L1: 50, L2: 80, L3: 100
+        replay_scores = {0: 25, 1: 50, 2: 80, 3: 100}
+        dynamic_score = replay_scores.get(replay_result.highest_level, 0)
+        
+        # Combine static entry-point discovery with dynamic results
+        # If dynamic verification passed, it's a huge boost
+        score = (score * 0.3) + (dynamic_score * 0.7)
+    elif replay_result and replay_result.error:
+        # If it failed to even start (e.g. no bwrap), keep static score but add info
+        pass
 
     score = max(0, min(100, score))
     return CategoryScore(
@@ -268,6 +273,7 @@ def compute_report(
     provenance_issues: list[Issue] | None = None,
     fingerprint_issues: list[Issue] | None = None,
     drift_issues: list[Issue] | None = None,
+    replay_result: ExecutionReplayResult | None = None,
 ) -> AuditReport:
     """Compute the full audit report with weighted scores."""
     if graph_issues is None:
@@ -280,7 +286,7 @@ def compute_report(
         _score_determinism(det_issues, graph_issues),
         _score_datasets(path_issues, semantic_result, provenance_issues),
         _score_semantic(semantic_result, semantic_issues, drift_issues),
-        _score_execution(repo_path, graph_issues),
+        _score_execution(repo_path, graph_issues, replay_result),
         _score_documentation(semantic_result, semantic_issues),
     ]
 

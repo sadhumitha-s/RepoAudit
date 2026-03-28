@@ -56,6 +56,7 @@ class SemanticAuditResult:
     readme_format: str = ""
     claimed_files: list[str] = field(default_factory=list)
     missing_files: list[str] = field(default_factory=list)
+    claimed_commands: list[str] = field(default_factory=list)
     claimed_data_dirs: list[str] = field(default_factory=list)
     missing_data_dirs: list[str] = field(default_factory=list)
     sections_present: dict[str, bool] = field(default_factory=dict)
@@ -215,6 +216,7 @@ def audit_directory(repo_path: str) -> tuple[SemanticAuditResult, list[Issue]]:
     # Verify claimed files exist
     repo_files = _get_repo_file_listing(repo_path)
     result.claimed_files = parsed["claimed_files"]
+    result.claimed_commands = parsed["claimed_commands"]
     for claimed in parsed["claimed_files"]:
         # Normalize the path
         normalized = claimed.lstrip("./")
