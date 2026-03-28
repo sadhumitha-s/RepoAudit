@@ -1,6 +1,17 @@
 import os
 import json
-from tree_sitter import Language, Parser
+try:
+    from tree_sitter import Language, Parser
+except ModuleNotFoundError:
+    # Fallback dummy classes for environments without tree_sitter
+    class Language:
+        def __init__(self, lib_path: str, language: str):
+            raise ImportError('tree_sitter is required for language parsing')
+    class Parser:
+        def set_language(self, language):
+            raise ImportError('tree_sitter is required for parsing')
+        def parse(self, source_bytes):
+            raise ImportError('tree_sitter is required for parsing')
 
 _ENGINE_DIR = os.path.dirname(os.path.abspath(__file__))
 _LIB_PATH = os.path.join(_ENGINE_DIR, "build", "languages.so")

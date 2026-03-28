@@ -12,7 +12,12 @@ import logging
 import re
 from dataclasses import dataclass, field
 
-from openai import OpenAI
+try:
+    from openai import OpenAI
+except ModuleNotFoundError:
+    class OpenAI:
+        def __init__(self, *args, **kwargs):
+            raise ImportError('openai package is required for LLM functionality')
 from config import get_settings
 from models import Issue
 

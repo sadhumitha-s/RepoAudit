@@ -15,7 +15,13 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import yaml
-from openai import OpenAI
+try:
+    from openai import OpenAI
+except ModuleNotFoundError:
+    # Fallback stub for environments without openai package
+    class OpenAI:
+        def __init__(self, *args, **kwargs):
+            raise ImportError('openai package is required for LLM functionality')
 from config import get_settings
 from models import Issue
 

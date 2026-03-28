@@ -13,7 +13,7 @@ RepoAudit scans public GitHub ML repositories and produces a **reproducibility s
 | Category | Weight | What's Checked |
 |----------|--------|----------------|
 | Environment | 20% | Pinned dependencies, Dockerfile, **Hardware Fingerprinting Detection** |
-| Determinism | 20% | AST-verified seeding, **Non-deterministic shuffling detection** |
+| Determinism | 20% | AST-verified seeding, **Non-deterministic shuffling detection**, Notebook out-of-order execution, cell mutation |
 | Datasets | 20% | No hardcoded paths, **Data Provenance (URL liveness, gated datasets)** |
 | Semantic | 20% | AI-verified alignment between README and repo structure |
 | Execution | 10% | Presence of standard entry points (`train.py`, `Makefile`, etc.) |
@@ -55,6 +55,7 @@ RepoAudit/
 │   │   ├── setup_parsers.py  # AOT Tree-sitter parser builder
 │   │   ├── parsers.py        # Multi-language AST loaders
 │   │   ├── ast_auditor.py    # Determinism checks (Python, R, Julia, .ipynb)
+│   │   ├── notebook_analyzer.py # Deep analysis for Jupyter Notebooks
 │   │   ├── path_auditor.py   # Hardcoded path detection
 │   │   ├── dependency_auditor.py              # Dependency analysis (Python, R, Julia)
 │   │   ├── semantic_auditor.py                # LLM README audit
@@ -241,6 +242,7 @@ curl -X POST https://repoaudit-api.onrender.com/api/v1/audit \
 - **Deterministic Auto-Remediation Engine**: Powered by offline AST manipulation, it instantly fixes high-confidence reproducibility blockers by injecting missing seeds, dynamically pinning unpinned dependencies, and rewriting hardcoded paths, outputting a concrete `.patch` file natively without LLMs.
 - **Data Provenance Auditing**: Detects how data is loaded, checks URL liveness, flags gated datasets, and identifies non-deterministic preprocessing.
 - **Configuration Drift Detection**: Catches discrepancies between claimed hyperparameters in README and actual values in config files or code defaults.
+- **Notebook-Specific Deep Analysis**: Goes beyond basic extraction to detect out-of-order cell execution (variable used before definition in earlier cells), identifies global state mutations (top-level assignments/imports), verifies "Restart and Run All" compatibility, and flags non-reproducible runtime dependency installations (e.g., `!pip install`).
 - **Reproducibility Scoring**: A weighted 0-100 score based on environment, determinism, datasets, and semantic alignment.
 
 ## Score History

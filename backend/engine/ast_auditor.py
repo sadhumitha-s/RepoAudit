@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 
 from models import Issue
 from engine.parsers import get_r_parser, get_julia_parser, extract_python_from_ipynb
+from engine.notebook_analyzer import analyze_notebook
 
 logger = logging.getLogger(__name__)
 
@@ -299,6 +300,10 @@ def audit_directory(repo_path: str) -> tuple[list[ASTAuditResult], list[Issue]]:
                 message=f"Could not parse: {result.parse_error}",
             ))
             continue
+        # Notebook specific analysis
+        if fpath.endswith('.ipynb'):
+            notebook_issues = analyze_notebook(fpath)
+            issues.extend(notebook_issues)
 
         if result.has_random_ops:
             any_random_ops = True
