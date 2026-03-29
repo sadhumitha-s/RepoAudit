@@ -94,3 +94,28 @@ class ScoreHistoryResponse(BaseModel):
     owner: str
     repo: str
     points: list[ScoreHistoryPoint]
+
+
+class ComparisonRequest(BaseModel):
+    urls: list[str] = Field(..., min_length=1, max_length=5, description="List of GitHub repository URLs to compare (max 5)")
+
+    @field_validator("urls")
+    @classmethod
+    def validate_urls(cls, v: list[str]) -> list[str]:
+        if not v:
+            raise ValueError("At least one URL is required")
+        if len(v) > 5:
+            raise ValueError("Maximum of 5 repositories can be compared at once")
+        
+        # We also need to validate each URL using the regex
+        validated = []
+        for url in v:
+            url = url.strip().rstrip("/")
+            if not _GITHUB_URL_RE.match(url + "/"):
+                raise ValueError(f"Invalid GitHub URL: {url}")
+            validated.append(url)
+        return validated
+
+
+class ComparisonResponse(BaseModel):
+    results: list[AuditResponse]

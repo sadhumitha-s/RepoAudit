@@ -125,3 +125,16 @@ export async function getScoreHistory(
     `/api/v1/audit/history/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
   );
 }
+
+// --- Comparison ---
+
+export interface ComparisonResponse {
+  results: AuditResponse[];
+}
+
+export async function compareRepositories(urls: string[]): Promise<ComparisonResponse> {
+  return request<ComparisonResponse>("/api/v1/compare", {
+    method: "POST",
+    body: JSON.stringify({ urls }),
+  });
+}

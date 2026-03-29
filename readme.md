@@ -227,6 +227,7 @@ RepoAudit runs on an entirely free stack:
 | `GET` | `/api/v1/audit/{id}` | Get full audit result |
 | `GET` | `/api/v1/audit/{id}/status` | Poll task progress |
 | `GET` | `/api/v1/audit/history/{owner}/{repo}` | Score history across audits |
+| `POST` | `/api/v1/compare` | Compare up to 5 repo URLs |
 | `GET` | `/health` | Health check |
 
 **Example:**
@@ -254,6 +255,7 @@ curl -X POST https://repoaudit-api.onrender.com/api/v1/audit \
 - **Execution Replay Verification (Lightweight)**: Goes beyond static analysis by performing a 4-tier reproduction check in a **Bubblewrap sandbox** (L0: Deps Install, L1: Import Success, L2: Entry point runs for >5s, L3: Output Production), providing a pass/fail signal for the actual reproducibility of the claimed workflow.
 - **Reproducibility Decay Tracking**: Quantifies "bit rot" by performing temporal analysis on pinned dependencies. It integrates with PyPI/CRAN/Pkg registries to detect yanked distributions and known CVEs, generating a predicted "shelf-life" score and decay curve visualization for long-term auditability.
 - **Reproducibility Scoring**: A weighted 0-100 score based on environment, determinism, datasets, and semantic alignment.
+- **Multi-Repository Comparative Analysis**: Compare reproducibility across related repositories (e.g., competing implementations of the same paper). Features an overlaid radar chart for 6-axis category breakdown, identifies the "Golden Standard" implementation with a 0-100 benchmark, and provides a unified comparison dashboard for research reviewers and reproducibility chairs.
 
 ## GitHub Action
 

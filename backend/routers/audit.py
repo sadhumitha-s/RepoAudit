@@ -23,6 +23,8 @@ from models import (
     CategoryScore,
     ScoreHistoryPoint,
     ScoreHistoryResponse,
+    ComparisonRequest,
+    ComparisonResponse,
 )
 from tasks import run_audit
 
@@ -41,9 +43,38 @@ async def submit_audit(req: AuditRequest):
     """Submit a repository for audit. Returns cached result or queues a new task."""
     try:
         url = resolve_url(req.url)
+        return await _submit_single_audit(url)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("Audit submission failed: %s", e)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
+
+@router.post("/compare", response_model=ComparisonResponse)
+async def compare_repositories(req: ComparisonRequest):
+    """Compare multiple repositories. Triggers audits if not already present."""
+    results = []
+    for url_str in req.urls:
+        try:
+            url = resolve_url(url_str)
+            result = await _submit_single_audit(url)
+            results.append(result)
+        except Exception as e:
+            logger.warning("Failed to process URL during comparison %s: %s", url_str, e)
+            # We return a placeholder fake response or just omit?
+            # Better to return a failed response if it's a real error
+            results.append(AuditResponse(
+                audit_id=str(uuid.uuid4()),
+                repo_url=url_str,
+                status=AuditStatus.FAILED,
+            ))
+    
+    return ComparisonResponse(results=results)
+
+
+async def _submit_single_audit(url: str) -> AuditResponse:
+    """Helper to process a single audit submission."""
     # Step 1: Resolve latest commit hash
     try:
         commit_hash = resolve_commit_hash(url)
