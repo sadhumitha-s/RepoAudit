@@ -43,7 +43,14 @@ Submit a repository for audit. If the exact commit hash has already been audited
   "status": "completed",
   "commit_hash": "abc1234...",
   "score": 85,
-  "report": { ... },
+  "report": { 
+    "categories": [...],
+    "decay_metrics": {
+      "shelf_life_days": 1200,
+      "time_to_break_days": 800,
+      "decay_curve": [{"date": "Year -1", "score": 95.0}, ...]
+    }
+  },
   "cached": true
 }
 ```
@@ -74,6 +81,7 @@ A lightweight endpoint for polling the progress of an active audit task.
 - `queued`: Waiting for an available worker.
 - `cloning`: Repository is being shallow-cloned.
 - `ast_analysis`: Running AST and dependency checks.
+- `decay_analysis`: Analyzing dependency history (PyPI) for yanked packages and CVEs.
 - `semantic_audit`: Performing LLM-powered README analysis.
 - `finalizing`: Computing final scores and storing results.
 - `completed`: Analysis finished successfully.

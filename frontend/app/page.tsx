@@ -7,6 +7,7 @@ import { ScoreCard } from "@/components/ScoreCard";
 import { RadarChart } from "@/components/RadarChart";
 import { FixFeed } from "@/components/FixFeed";
 import { ScoreHistory } from "@/components/ScoreHistory";
+import { DecayCard } from "@/components/DecayCard";
 import {
   submitAudit,
   getAudit,
@@ -165,6 +166,12 @@ export default function HomePage() {
             />
             <RadarChart categories={audit.report.categories} />
           </div>
+
+          {audit.report.decay_metrics && (
+            <div className="grid gap-8 md:grid-cols-1">
+              <DecayCard metrics={audit.report.decay_metrics} />
+            </div>
+          )}
 
           {parsed && <ScoreHistory owner={parsed.owner} repo={parsed.repo} />}
 

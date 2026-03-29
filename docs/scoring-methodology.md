@@ -24,6 +24,8 @@ Scored based on the presence and quality of dependency management files.
   - `-20` points if `requirements.txt` is present but contains no pinned versions.
   - Up to `-20` points for missing dependencies detected via import analysis.
   - Up to `-30` points for "Hardware Fingerprinting" (anti-sandbox/HW identification).
+  - `-20` points for **each** yanked dependency found on PyPI.
+  - `-10` points for **each** dependency with known CVEs.
 - **Bonus:**
   - `+10` points (max 100) if a **Dockerfile** is provided.
 

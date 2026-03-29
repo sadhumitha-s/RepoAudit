@@ -16,11 +16,18 @@ export interface CategoryScore {
   issues: Issue[];
 }
 
+export interface DecayMetrics {
+  shelf_life_days: number;
+  time_to_break_days: number;
+  decay_curve: { date: string; score: number }[];
+}
+
 export interface AuditReport {
   categories: CategoryScore[];
   total_score: number;
   summary: string;
   patch?: string;
+  decay_metrics?: DecayMetrics;
 }
 
 export interface AuditResponse {

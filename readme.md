@@ -15,9 +15,7 @@ Automated reproducibility analysis for machine learning research repositories (s
 
 RepoAudit scans public GitHub ML repositories and produces a **reproducibility score (0–100)** across six categories:
 
-| Category | Weight | What's Checked |
-|----------|--------|----------------|
-| Environment | 15% | Pinned dependencies, Dockerfile, **Hardware Fingerprinting Detection** |
+| Environment | 15% | Pinned dependencies, Dockerfile, **Reproducibility Decay Tracking** (Yanked pkgs, CVEs, shelf-life) |
 | Determinism | 20% | AST-verified seeding, **Non-deterministic shuffling detection**, Notebook out-of-order execution, cell mutation |
 | Datasets | 15% | No hardcoded paths, **Data Provenance (URL liveness, gated datasets)** |
 | Semantic | 20% | AI-verified alignment between README and repo structure |
@@ -70,6 +68,7 @@ RepoAudit/
 │   │   ├── configuration_drift_auditor.py     # Hyperparameter discrepancy detection
 │   │   ├── sandbox.py                         # Bubblewrap orchestration
 │   │   ├── replay_auditor.py                  # Dynamic L0–L3 execution verification
+│   │   ├── decay_auditor.py                   # Reproducibility decay (bit rot) tracking
 │   │   ├── auto_remediator.py                 # AST-powered deterministic code-mod engine
 │   │   └── scoring.py                         # Weighted score computation
 │   └── tests/
@@ -94,6 +93,7 @@ RepoAudit/
 │   │   ├── RadarChart.tsx    # 6-axis category chart
 │   │   ├── ScoreHistory.tsx  # Score trend line chart
 │   │   ├── FixFeed.tsx       # Prioritized issue list
+│   │   ├── DecayCard.tsx     # Decay curve & shelf-life visualization
 │   │   └── StatusIndicator.tsx   # Progress stepper
 │   └── lib/
 │       └── api.ts            # Typed API client
@@ -252,6 +252,7 @@ curl -X POST https://repoaudit-api.onrender.com/api/v1/audit \
 - **Configuration Drift Detection**: Catches discrepancies between claimed hyperparameters in README and actual values in config files or code defaults.
 - **Notebook-Specific Deep Analysis**: Goes beyond basic extraction to detect out-of-order cell execution (variable used before definition in earlier cells), identifies global state mutations (top-level assignments/imports), verifies "Restart and Run All" compatibility, and flags non-reproducible runtime dependency installations (e.g., `!pip install`).
 - **Execution Replay Verification (Lightweight)**: Goes beyond static analysis by performing a 4-tier reproduction check in a **Bubblewrap sandbox** (L0: Deps Install, L1: Import Success, L2: Entry point runs for >5s, L3: Output Production), providing a pass/fail signal for the actual reproducibility of the claimed workflow.
+- **Reproducibility Decay Tracking**: Quantifies "bit rot" by performing temporal analysis on pinned dependencies. It integrates with PyPI/CRAN/Pkg registries to detect yanked distributions and known CVEs, generating a predicted "shelf-life" score and decay curve visualization for long-term auditability.
 - **Reproducibility Scoring**: A weighted 0-100 score based on environment, determinism, datasets, and semantic alignment.
 
 ## GitHub Action

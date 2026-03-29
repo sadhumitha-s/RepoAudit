@@ -65,6 +65,7 @@ The audit engine utilizes a pipeline of specialized auditors, each focusing on a
 | **Path Auditor** | Finds hardcoded absolute paths that break portability. | Pattern matching and AST analysis. |
 | **Semantic Auditor** | Verifies alignment between README documentation and project structure. | LLM-powered semantic analysis. |
 | **Replay Auditor** | Performs dynamic execution checks (L0–L3 verification). | Orchestrates Bubblewrap for secure execution. |
+| **Decay Auditor** | Tracks "bit rot" via dependency stale-dating and yanked packages. | PyPI API snapshots & dependency age analysis. |
 | **Auto-Remediator** | Generates patches for high-confidence reproducibility issues. | Deterministic code-mods via `libcst`. |
 
 ## Security & Isolation

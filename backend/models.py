@@ -50,11 +50,18 @@ class CategoryScore(BaseModel):
     issues: list[Issue] = []
 
 
+class DecayMetrics(BaseModel):
+    shelf_life_days: int
+    time_to_break_days: int
+    decay_curve: list[dict] # [{"date": "Year -x", "score": float}]
+
+
 class AuditReport(BaseModel):
     categories: list[CategoryScore]
     total_score: float = Field(ge=0, le=100)
     summary: str = ""
     patch: str | None = None
+    decay_metrics: DecayMetrics | None = None
 
 
 

@@ -5,6 +5,7 @@ import { ScoreCard } from "@/components/ScoreCard";
 import { RadarChart } from "@/components/RadarChart";
 import { FixFeed } from "@/components/FixFeed";
 import { ScoreHistory } from "@/components/ScoreHistory";
+import { DecayCard } from "@/components/DecayCard";
 import { StatusIndicator } from "@/components/StatusIndicator";
 import { getAudit, type AuditResponse } from "@/lib/api";
 
@@ -68,6 +69,12 @@ export function AuditDetail({ id }: { id: string }) {
         />
         <RadarChart categories={audit.report.categories} />
       </div>
+
+      {audit.report.decay_metrics && (
+        <div className="grid gap-6 md:grid-cols-1">
+          <DecayCard metrics={audit.report.decay_metrics} />
+        </div>
+      )}
 
       {parsed && <ScoreHistory owner={parsed.owner} repo={parsed.repo} />}
 

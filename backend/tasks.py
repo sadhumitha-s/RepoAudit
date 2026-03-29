@@ -10,7 +10,7 @@ import redis as redis_lib
 from worker import celery_app
 from config import get_settings
 from db import get_db
-from engine import cloner, ast_auditor, path_auditor, dependency_auditor
+from engine import cloner, ast_auditor, path_auditor, dependency_auditor, decay_auditor
 from engine import semantic_auditor, scoring, import_graph, data_provenance_auditor, hardware_fingerprinting_auditor, configuration_drift_auditor, replay_auditor
 from models import AuditStatus
 
@@ -64,6 +64,9 @@ def run_audit(self, audit_id: str, repo_url: str, commit_hash: str) -> dict:
         # Phase 2.8: Configuration Drift Audit
         drift_result, drift_issues = configuration_drift_auditor.audit_directory(clone_path)
 
+        # Phase 2.9: Reproducibility Decay Audit
+        decay_result, decay_issues = decay_auditor.audit_directory(clone_path)
+
         # Phase 3: Semantic Audit
         _update_status(audit_id, AuditStatus.SEMANTIC_AUDIT)
         sem_result, sem_issues = semantic_auditor.audit_directory(clone_path)
@@ -91,6 +94,8 @@ def run_audit(self, audit_id: str, repo_url: str, commit_hash: str) -> dict:
             fingerprint_issues=fingerprint_issues,
             drift_issues=drift_issues,
             replay_result=replay_result,
+            decay_result=decay_result,
+            decay_issues=decay_issues,
         )
 
         # Phase 4.5: Auto-Remediation

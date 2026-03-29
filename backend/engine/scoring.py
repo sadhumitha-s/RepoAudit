@@ -8,10 +8,11 @@ Computes a weighted reproducibility score from 0–100 based on
 from __future__ import annotations
 import os
 
-from models import CategoryScore, AuditReport, Issue
+from models import CategoryScore, AuditReport, Issue, DecayMetrics
 from engine.dependency_auditor import DependencyAuditResult
 from engine.semantic_auditor import SemanticAuditResult
 from engine.replay_auditor import ExecutionReplayResult
+from engine.decay_auditor import DecayAuditResult
 
 
 CATEGORY_WEIGHTS: dict[str, float] = {
@@ -28,6 +29,8 @@ def _score_environment(
     dep_result: DependencyAuditResult,
     env_issues: list[Issue],
     fingerprint_issues: list[Issue] | None = None,
+    decay_result: DecayAuditResult | None = None,
+    decay_issues: list[Issue] | None = None,
 ) -> CategoryScore:
     """Score environment reproducibility (requirements, pinning)."""
     score = 100.0
@@ -66,12 +69,21 @@ def _score_environment(
             elif fi.severity == "info":
                 score -= 2
 
+    # Penalize decay issues
+    if decay_result:
+        score -= len(decay_result.yanked_packages) * 20
+        score -= len(decay_result.cve_packages) * 10
+
     score = max(0, min(100, score))
+    all_issues = [i for i in env_issues if i.rule == "dependency"]
+    if decay_issues:
+        all_issues.extend(decay_issues)
+        
     return CategoryScore(
         name="environment",
         weight=CATEGORY_WEIGHTS["environment"],
         score=round(score, 1),
-        issues=[i for i in env_issues if i.rule == "dependency"],
+        issues=all_issues,
     )
 
 
@@ -274,6 +286,8 @@ def compute_report(
     fingerprint_issues: list[Issue] | None = None,
     drift_issues: list[Issue] | None = None,
     replay_result: ExecutionReplayResult | None = None,
+    decay_result: DecayAuditResult | None = None,
+    decay_issues: list[Issue] | None = None,
 ) -> AuditReport:
     """Compute the full audit report with weighted scores."""
     if graph_issues is None:
@@ -282,7 +296,7 @@ def compute_report(
         provenance_issues = []
 
     categories = [
-        _score_environment(dep_result, dep_issues, fingerprint_issues),
+        _score_environment(dep_result, dep_issues, fingerprint_issues, decay_result, decay_issues),
         _score_determinism(det_issues, graph_issues),
         _score_datasets(path_issues, semantic_result, provenance_issues),
         _score_semantic(semantic_result, semantic_issues, drift_issues),
@@ -307,8 +321,17 @@ def compute_report(
             f"Critical area: {worst.name} ({worst.score}/100)."
         )
 
+    decay_metrics = None
+    if decay_result:
+        decay_metrics = DecayMetrics(
+            shelf_life_days=decay_result.shelf_life_days,
+            time_to_break_days=decay_result.time_to_break_days,
+            decay_curve=decay_result.decay_curve
+        )
+
     return AuditReport(
         categories=categories,
         total_score=total,
         summary=summary,
+        decay_metrics=decay_metrics,
     )
