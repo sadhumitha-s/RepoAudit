@@ -15,6 +15,8 @@ Automated reproducibility analysis for machine learning research repositories (s
 
 RepoAudit scans public GitHub ML repositories and produces a **reproducibility score (0–100)** across six categories:
 
+| Category | Weight | Checks |
+|-------|-----------| ------- |
 | Environment | 15% | Pinned dependencies, Dockerfile, **Reproducibility Decay Tracking** (Yanked pkgs, CVEs, shelf-life) |
 | Determinism | 20% | AST-verified seeding, **Non-deterministic shuffling detection**, Notebook out-of-order execution, cell mutation |
 | Datasets | 15% | No hardcoded paths, **Data Provenance (URL liveness, gated datasets)** |
