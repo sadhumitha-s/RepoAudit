@@ -264,7 +264,7 @@ curl -X POST https://repoaudit-api.onrender.com/api/v1/audit \
 RepoAudit can be integrated into your CI/CD pipeline to automatically audit PRs.
 
 ```yaml
-      - uses: sadhumitha-s/RepoAudit@v1.0.0
+      - uses: sadhumitha-s/RepoAudit@v2.0.0
         with:
           api-url: https://repoaudit-api.onrender.com
           threshold: "70"
@@ -273,8 +273,9 @@ RepoAudit can be integrated into your CI/CD pipeline to automatically audit PRs.
 
 ## Documentation
 
-- [**System Architecture**](docs/architecture.md) — Detailed architecture and component interaction.
-- [**Scoring Methodology**](docs/scoring-methodology.md) — Deep dive into how reproducibility scores are calculated.
-- [**API Reference**](docs/api-reference.md) — Comprehensive guide for all API endpoints.
-- [**Development Guide**](docs/development-guide.md) — Setup for local development and contributing.
-- [**GitHub Action Usage**](docs/github-action-usage.md) — Advanced configuration for the CI action.
+- [**System Architecture**](docs/architecture.md) - Detailed architecture and component interaction.
+- [**Scoring Methodology**](docs/scoring-methodology.md) - Deep dive into how reproducibility scores are calculated.
+- [**API Reference**](docs/api-reference.md) - Comprehensive guide for all API endpoints.
+- [**Development Guide**](docs/development-guide.md) - Setup for local development and contributing.
+- [**GitHub Action Usage**](docs/github-action-usage.md) - Advanced configuration for the CI action.
+- [**Comparison Guide**](docs/comparative-analysis.md) - Comparative analysis of multiple repositories.

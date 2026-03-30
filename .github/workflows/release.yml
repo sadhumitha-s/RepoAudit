@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update Major Version Tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          # Extract tag name (e.g., v1.2.3)
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          
+          # Extract major version (e.g., v1)
+          MAJOR_VERSION=$(echo "$TAG_NAME" | cut -d. -f1)
+          
+          # Only proceed if it matches the pattern v1, v2, etc.
+          if [[ $MAJOR_VERSION =~ ^v[0-9]+$ ]]; then
+            echo "Updating major tag $MAJOR_VERSION to point to $TAG_NAME"
+            
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            
+            # Delete local and remote major tag if it exists
+            git tag -d "$MAJOR_VERSION" || true
+            git push origin :refs/tags/"$MAJOR_VERSION" || true
+            
+            # Create and push the new major tag
+            git tag "$MAJOR_VERSION" "$TAG_NAME"
+            git push origin "$MAJOR_VERSION"
+          else
+            echo "Tag $TAG_NAME does not appear to follow semantic versioning. Skipping major tag update."
+          fi
