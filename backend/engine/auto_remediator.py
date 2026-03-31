@@ -19,6 +19,7 @@ except ImportError:
     m = None
 
 from models import Issue
+from engine.utils import skip_ignored_dirs
 
 logger = logging.getLogger(__name__)
 
@@ -249,8 +250,8 @@ def remediate_issues(repo_path: str, issues: list[Issue]) -> str | None:
     if global_seed_issue:
         # Find the first .py file that might be the main script
         py_files = []
-        for root, _, files in os.walk(repo_path):
-            if ".venv" in root or "node_modules" in root: continue
+        for root, dirnames, files in os.walk(repo_path):
+            skip_ignored_dirs(dirnames)
             for f in files:
                 if f.endswith(".py"):
                     py_files.append(os.path.relpath(os.path.join(root, f), repo_path))

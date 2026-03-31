@@ -16,6 +16,7 @@ import logging
 from dataclasses import dataclass, field
 
 from models import Issue
+from engine.utils import skip_ignored_dirs
 from engine.parsers import get_r_parser, get_julia_parser, extract_python_from_ipynb
 
 logger = logging.getLogger(__name__)
@@ -275,11 +276,7 @@ def audit_directory(repo_path: str) -> tuple[DependencyAuditResult, list[Issue]]
 
     # Collect all imports from supported files
     for dirpath, dirnames, filenames in os.walk(repo_path):
-        dirnames[:] = [
-            d for d in dirnames
-            if not d.startswith(".")
-            and d not in ("venv", ".venv", "env", "node_modules", "__pycache__")
-        ]
+        skip_ignored_dirs(dirnames)
         for fname in filenames:
             if fname.endswith((".py", ".ipynb", ".r", ".jl")):
                 fpath = os.path.join(dirpath, fname)

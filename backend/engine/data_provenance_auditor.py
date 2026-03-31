@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from models import Issue
+from engine.utils import skip_ignored_dirs
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +173,7 @@ def audit_directory(repo_path: str) -> tuple[list[ProvenanceAuditResult], list[I
 
     target_files: list[str] = []
     for dirpath, dirnames, filenames in os.walk(repo_path):
-        dirnames[:] = [d for d in dirnames if not d.startswith(".") and d not in ("venv", ".venv", "env", "node_modules", "__pycache__")]
+        skip_ignored_dirs(dirnames)
         for fname in filenames:
             if fname.endswith(".py"):
                 target_files.append(os.path.join(dirpath, fname))

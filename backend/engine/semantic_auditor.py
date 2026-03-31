@@ -20,6 +20,7 @@ except ModuleNotFoundError:
             raise ImportError('openai package is required for LLM functionality')
 from config import get_settings
 from models import Issue
+from engine.utils import skip_ignored_dirs
 
 logger = logging.getLogger(__name__)
 
@@ -93,10 +94,7 @@ def _get_repo_file_listing(repo_path: str) -> set[str]:
     """Get a set of all relative file/dir paths in the repo."""
     paths: set[str] = set()
     for dirpath, dirnames, filenames in os.walk(repo_path):
-        dirnames[:] = [
-            d for d in dirnames
-            if not d.startswith(".") and d != "node_modules"
-        ]
+        skip_ignored_dirs(dirnames)
         rel_dir = os.path.relpath(dirpath, repo_path)
         if rel_dir != ".":
             paths.add(rel_dir)
@@ -126,6 +124,7 @@ def _query_llm(readme_content: str) -> dict:
         temperature=0.0,
         max_tokens=2000,
         response_format={"type": "json_object"},
+        timeout=120,
     )
 
     raw = response.choices[0].message.content

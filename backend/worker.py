@@ -18,11 +18,12 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
     worker_max_tasks_per_child=10,
-    task_soft_time_limit=120,
-    task_time_limit=180,
+    task_soft_time_limit=300,
+    task_time_limit=360,
     task_acks_late=True,
     worker_prefetch_multiplier=1,
     broker_connection_retry_on_startup=True,
+    broker_transport_options={"visibility_timeout": 7200},  # 2 hours
 )
 
 # Enable TLS for Upstash Redis (rediss://) connections

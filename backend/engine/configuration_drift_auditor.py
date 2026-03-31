@@ -24,6 +24,7 @@ except ModuleNotFoundError:
             raise ImportError('openai package is required for LLM functionality')
 from config import get_settings
 from models import Issue
+from engine.utils import skip_ignored_dirs
 
 logger = logging.getLogger(__name__)
 
@@ -103,8 +104,7 @@ def _extract_argparse_defaults(repo_path: str) -> dict[str, Any]:
     """Search for argparse defaults in Python files."""
     all_defaults: dict[str, Any] = {}
     for dirpath, dirnames, filenames in os.walk(repo_path):
-        # Skip common directories
-        dirnames[:] = [d for d in dirnames if not d.startswith(".") and d not in ("venv", ".venv", "env", "node_modules", "__pycache__")]
+        skip_ignored_dirs(dirnames)
         for fname in filenames:
             if fname.endswith(".py"):
                 fpath = os.path.join(dirpath, fname)
@@ -139,6 +139,7 @@ def _query_llm_for_claims(readme_content: str) -> dict:
             temperature=0.0,
             max_tokens=1000,
             response_format={"type": "json_object"},
+            timeout=120,
         )
         raw = response.choices[0].message.content
         if not raw:
@@ -159,7 +160,7 @@ def audit_directory(repo_path: str) -> tuple[ConfigurationDriftResult, list[Issu
     # 1. Find and parse config files
     config_exts = (".yaml", ".yml", ".json")
     for dirpath, dirnames, filenames in os.walk(repo_path):
-        dirnames[:] = [d for d in dirnames if not d.startswith(".") and d not in ("venv", ".venv", "env", "node_modules", "__pycache__")]
+        skip_ignored_dirs(dirnames)
         for fname in filenames:
             if fname.endswith(config_exts):
                 fpath = os.path.join(dirpath, fname)

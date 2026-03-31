@@ -12,6 +12,7 @@ import logging
 from dataclasses import dataclass, field
 
 from models import Issue
+from engine.utils import skip_ignored_dirs
 from engine.parsers import get_r_parser, get_julia_parser, extract_python_from_ipynb
 from engine.notebook_analyzer import analyze_notebook
 
@@ -264,12 +265,7 @@ def audit_directory(repo_path: str) -> tuple[list[ASTAuditResult], list[Issue]]:
 
     target_files: list[str] = []
     for dirpath, dirnames, filenames in os.walk(repo_path):
-        # Skip hidden dirs, venvs, test dirs
-        dirnames[:] = [
-            d for d in dirnames
-            if not d.startswith(".")
-            and d not in ("venv", ".venv", "env", "node_modules", "__pycache__")
-        ]
+        skip_ignored_dirs(dirnames)
         for fname in filenames:
             if fname.endswith((".py", ".ipynb", ".r", ".jl")):
                 target_files.append(os.path.join(dirpath, fname))

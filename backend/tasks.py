@@ -31,7 +31,13 @@ def _update_status(audit_id: str, status: AuditStatus) -> None:
         logger.warning("Failed to update status in Redis: %s", e)
 
 
-@celery_app.task(bind=True, max_retries=2, default_retry_delay=30)
+@celery_app.task(
+    bind=True,
+    max_retries=2,
+    default_retry_delay=30,
+    soft_time_limit=600,
+    time_limit=660
+)
 def run_audit(self, audit_id: str, repo_url: str, commit_hash: str) -> dict:
     """
     Main audit task. Clones repo, runs all analysis engines, stores results.

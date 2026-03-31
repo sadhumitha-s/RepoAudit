@@ -13,6 +13,7 @@ import logging
 from dataclasses import dataclass
 
 from models import Issue
+from engine.utils import skip_ignored_dirs
 from engine.parsers import extract_python_from_ipynb
 
 logger = logging.getLogger(__name__)
@@ -139,11 +140,7 @@ def audit_directory(repo_path: str) -> list[Issue]:
     issues: list[Issue] = []
 
     for dirpath, dirnames, filenames in os.walk(repo_path):
-        dirnames[:] = [
-            d for d in dirnames
-            if not d.startswith(".")
-            and d not in ("venv", ".venv", "env", "node_modules", "__pycache__")
-        ]
+        skip_ignored_dirs(dirnames)
         for fname in filenames:
             if not fname.endswith((".py", ".ipynb", ".r", ".jl")):
                 continue
