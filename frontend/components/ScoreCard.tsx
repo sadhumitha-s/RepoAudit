@@ -54,10 +54,10 @@ export function ScoreCard({ score, summary, cached, commitHash }: Props) {
           </div>
         </div>
 
-        <div className="space-y-3 text-center sm:text-left">
-          <h2 className="text-xl font-bold uppercase tracking-wide text-white">Reproducibility Score</h2>
-          <p className="text-base text-gray-400 font-medium">{summary}</p>
-          <div className="flex flex-wrap justify-center sm:justify-start gap-3 mt-2">
+        <div className="space-y-2 text-center sm:text-left min-w-0 flex-1">
+          <h2 className="text-lg font-black uppercase tracking-tight text-white leading-tight">Reproducibility Score</h2>
+          <p className="text-sm text-zinc-400 font-medium leading-relaxed">{summary}</p>
+          <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-2">
             {cached && (
               <span className="neo-border bg-[#2563eb] px-3 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-neo-sm">
                 Cached

@@ -157,7 +157,7 @@ export default function ComparePage() {
             <div className="space-y-6">
                <h3 className="text-2xl font-black uppercase text-white tracking-tighter italic border-b-4 border-brand-accent pb-2">Top Performer</h3>
                {winner ? (
-                 <div className="neo-card bg-brand-accent text-black p-8 border-4 border-black group relative overflow-hidden shadow-neo-lg">
+                 <div className="neo-card !bg-brand-accent text-black p-8 border-4 border-black group relative overflow-hidden shadow-neo-lg">
                     <Trophy size={140} className="absolute -right-10 -bottom-10 opacity-30 group-hover:scale-110 transition-transform duration-1000 rotate-12" />
                     <div className="relative z-10">
                         <div className="bg-black text-brand-accent text-[10px] font-black px-2 py-0.5 inline-block mb-3 uppercase tracking-tighter">Golden Standard</div>
