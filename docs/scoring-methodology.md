@@ -35,7 +35,10 @@ Focuses on patterns that introduce non-determinism into training or evaluation.
 - **Penalties:**
   - `-40` points for each **Critical** determinism issue (e.g., unseeded `random.seed()`, `np.random.seed()`, `torch.manual_seed()`).
   - `-10` points for **Warnings** (e.g., non-deterministic `shuffle=True` in data loaders).
-  - Also detects **out-of-order execution** in Jupyter Notebooks.
+  - **Notebook Deep Analysis**:
+    - `-20` points for **out-of-order execution** (variable used before definition in earlier cells).
+    - `-10` points for **global state mutations** (top-level assignments/imports that impact reproducibility).
+    - `-10` points for **non-reproducible installs** (e.g., `!pip install` inside cells).
 
 ## 3. Datasets (15%)
 Evaluates the portability and accessibility of datasets.
@@ -76,6 +79,20 @@ RepoAudit provides a textual summary based on the total score:
 - **Total ≥ 80:** "Repository has good reproducibility practices."
 - **Total ≥ 50:** "Repository needs improvement."
 - **Total < 50:** "Significant reproducibility concerns."
+
+---
+
+## Multi-Repository Comparative Analysis
+
+When multiple repositories are compared, RepoAudit identifies a **Golden Standard** implementation.
+
+### The Golden Standard Logic
+The Golden Standard implementation is determined by:
+1. **Highest Aggregate Score**: The primary metric for comparison.
+2. **Execution Tier**: Tied scores are broken by the highest achieved Replay Verification level (L0–L3).
+3. **Reproducibility Shelf-life**: If execution tiers are also tied, the repository with the longest predicted shelf-life (lowest decay) is selected.
+
+This benchmarking allows researchers to quickly identify the most robust implementation among competing versions of the same research paper or project.
 
 ---
 

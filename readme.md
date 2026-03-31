@@ -11,6 +11,19 @@ Automated reproducibility analysis for machine learning research repositories (s
 
 **Live:** [repo-audit.vercel.app](https://repo-audit.vercel.app) · **API:** [repoaudit-api.onrender.com](https://repoaudit-api.onrender.com/health)
 
+## Table of Contents
+
+- [What It Does](#what-it-does)
+- [What's New in v2.0](#whats-new-in-v2.0)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Deployment](#deployment)
+- [API Endpoints](#api-endpoints)
+- [Features](#features)
+- [GitHub Action](#github-action)
+- [Documentation](#documentation)
+
 ## What It Does
 
 RepoAudit scans public GitHub ML repositories and produces a **reproducibility score (0–100)** across six categories:
@@ -23,6 +36,15 @@ RepoAudit scans public GitHub ML repositories and produces a **reproducibility s
 | Semantic | 20% | AI-verified alignment between README and repo structure |
 | Execution | 20% | **L0–L3 Replay Verification via Bubblewrap**, Presence of standard entry points (`train.py`, `Makefile`, etc.) |
 | Documentation | 10% | README sections for Installation, Usage, Datasets |
+
+## What's New in v2.0
+
+- **Multi-Repository Comparative Analysis**: Benchmark up to 5 repositories side-by-side with overlaid radar charts and **"Golden Standard"** identification.
+- **Reproducibility Decay Tracking**: Monitor "bit rot" via dependency stale-dating, yanked package detection, and CVE scanning with temporal decay curves.
+- **Execution Replay Verification**: Lightweight **Bubblewrap sandboxing** for L0–L3 dynamic reproduction checks (Deps -> Imports -> Entrypoints -> Outputs).
+- **Notebook Deep Analysis**: Advanced AST auditing for Jupyter Notebooks (out-of-order execution, global state mutation detection, and "Restart & Run All" compatibility).
+- **Automated GitHub Release Workflow**: Streamlined versioning and deployment via GitHub Actions.
+- **Optimized Audit Engine**: Faster analysis with non-essential directory skipping and robust Celery task management.
 
 ## Tech Stack
 

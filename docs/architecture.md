@@ -47,12 +47,21 @@ graph TD
 - **Role**: Performs the actual audit analysis.
 - **Key Features**:
   - Clones repositories lazily (shallow clone).
+  - **Optimized Scanning**: Skips non-essential directories (e.g., `.git`, `__pycache__`, `node_modules`, `venv`) to reduce disk I/O and speed up analysis.
   - Orchestrates a suite of specialized auditors.
   - Executes dynamic reproduction checks in a secure sandbox.
 
 ### 4. Storage & State
 - **Redis (Valkey/Upstash)**: Used as the message broker for Celery and as a fast L1 cache for recent audit results.
 - **PostgreSQL (Supabase)**: Persistent storage for repository metadata and historical audit reports.
+
+### 5. Multi-Repository Comparative Analysis
+- **Role**: Enabling researchers to benchmark and compare multiple implementations side-by-side.
+- **Key Features**:
+  - Parallel audit execution for up to 5 repositories.
+  - Unified data aggregation layer for cross-repo metrics.
+  - Radar chart orchestration for visual category-level benchmarking.
+  - **Golden Standard Logic**: Algorithmic identification of the most reproducible implementation based on aggregate scoring.
 
 ## Audit Engine Deep Dive
 
@@ -64,6 +73,7 @@ The audit engine utilizes a pipeline of specialized auditors, each focusing on a
 | **Dependency Auditor** | Analyzes environment requirements and dependency pinning. | Parsing `requirements.txt`, `pyproject.toml`, etc. |
 | **Path Auditor** | Finds hardcoded absolute paths that break portability. | Pattern matching and AST analysis. |
 | **Semantic Auditor** | Verifies alignment between README documentation and project structure. | LLM-powered semantic analysis. |
+| **Notebook Analyzer** | Performs deep analysis on Jupyter Notebooks for execution order and state. | AST analysis of `.ipynb` JSON structure and cell content. |
 | **Replay Auditor** | Performs dynamic execution checks (L0–L3 verification). | Orchestrates Bubblewrap for secure execution. |
 | **Decay Auditor** | Tracks "bit rot" via dependency stale-dating and yanked packages. | PyPI API snapshots & dependency age analysis. |
 | **Auto-Remediator** | Generates patches for high-confidence reproducibility issues. | Deterministic code-mods via `libcst`. |

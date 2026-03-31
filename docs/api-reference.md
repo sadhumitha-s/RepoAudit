@@ -89,6 +89,24 @@ A lightweight endpoint for polling the progress of an active audit task.
 
 ---
 
+### `POST /api/v1/compare`
+Submit multiple repositories for concurrent analysis and benchmarking.
+
+**Request Body:**
+```json
+{
+  "urls": [
+    "https://github.com/owner/repo-a",
+    "https://github.com/owner/repo-b"
+  ]
+}
+```
+
+**Response:**
+Returns a list of `AuditResponse` objects. Each object follows the same structure as `POST /api/v1/audit`. If a repository is already audited, it returns the cached result; otherwise, it triggers a new analysis task.
+
+---
+
 ## 3. History Endpoints
 
 ### `GET /api/v1/audit/history/{owner}/{repo}`
