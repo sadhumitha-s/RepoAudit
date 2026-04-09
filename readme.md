@@ -11,10 +11,12 @@ Automated reproducibility analysis for machine learning research repositories (s
 
 **Live:** [repo-audit.vercel.app](https://repo-audit.vercel.app) · **API:** [repoaudit-api.onrender.com](https://repoaudit-api.onrender.com/health)
 
+Watch the [Demo video](https://www.youtube.com/watch?v=sXdnrQQye8I)
+
 ## Table of Contents
 
 - [What It Does](#what-it-does)
-- [What's New in v2.0](#whats-new-in-v2.0)
+- [What's New in v2.0](#whats-new-in-v20)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
