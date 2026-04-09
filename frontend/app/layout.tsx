@@ -32,7 +32,7 @@ export default function RootLayout({
             </a>
             <nav className="ml-auto flex gap-8">
               <a href="/compare" className="text-xs font-black uppercase tracking-widest hover:text-brand-accent transition-colors">Compare</a>
-              <a href="https://github.com/sadhumitha-s/RepoAudit" target="_blank" rel="noopener noreferrer" className="text-xs font-black uppercase tracking-widest hover:text-brand-accent transition-colors">Docs</a>
+              <a href="https://github.com/sadhumitha-s/RepoAudit/tree/main/docs" target="_blank" rel="noopener noreferrer" className="text-xs font-black uppercase tracking-widest hover:text-brand-accent transition-colors">Docs</a>
             </nav>
           </div>
         </header>

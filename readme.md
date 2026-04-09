@@ -301,3 +301,4 @@ RepoAudit can be integrated into your CI/CD pipeline to automatically audit PRs.
 - [**Development Guide**](docs/development-guide.md) - Setup for local development and contributing.
 - [**GitHub Action Usage**](docs/github-action-usage.md) - Advanced configuration for the CI action.
 - [**Comparison Guide**](docs/comparative-analysis.md) - Comparative analysis of multiple repositories.
+- [**Contribution Guide**](docs/contribution.md) - Guidelines for contributing to the project.
