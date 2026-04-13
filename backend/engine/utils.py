@@ -45,3 +45,18 @@ def skip_ignored_dirs(dirnames: list[str]) -> None:
             ...
     """
     dirnames[:] = [d for d in dirnames if d.lower() not in IGNORED_DIRS and not d.startswith(".")]
+
+
+def resolve_call_name(node: ast.Call) -> str | None:
+    """Resolve a call node to a dotted string like 'torch.manual_seed'."""
+    import ast
+    parts: list[str] = []
+    current = node.func
+    while isinstance(current, ast.Attribute):
+        parts.append(current.attr)
+        current = current.value
+    if isinstance(current, ast.Name):
+        parts.append(current.id)
+    else:
+        return None
+    return ".".join(reversed(parts))

@@ -56,14 +56,19 @@ Checks if the repository's code matches its documentation using LLM analysis.
   - Penalizes **Configuration Drift**: Discrepancies between hyperparameters in README and actual code defaults.
 
 ## 5. Execution (20%)
-Combines static entry-point detection with dynamic execution replay verification.
-- **Static Check (30% weight of category):**
-  - Points awarded for common entry points: `main.py`, `train.py`, `run.py`, `app.py`, `Makefile`, `setup.py`, `pyproject.toml`.
-- **Dynamic Replay (70% weight of category):**
-  - **L0 (25 pts):** Dependencies install successfully.
-  - **L1 (50 pts):** Main entry point can be imported and initialized.
-  - **L2 (80 pts):** Entry point runs for >5 seconds without crashing.
-  - **L3 (100 pts):** Execution produces expected output (files/logs).
+Combines static entry-point detection, dynamic execution replay verification, and **Pipeline Graph Reconstruction (PGR)**.
+
+- **Reproducibility Flow (50% weight of category):**
+  - **Static Check (30% weight of sub-score):** Points awarded for common entry points: `main.py`, `train.py`, `run.py`, `app.py`, `Makefile`, `setup.py`, `pyproject.toml`.
+  - **Dynamic Replay (70% weight of sub-score):**
+    - **L0 (25 pts):** Dependencies install successfully.
+    - **L1 (50 pts):** Main entry point can be imported and initialized.
+    - **L2 (80 pts):** Entry point runs for >5 seconds without crashing.
+    - **L3 (100 pts):** Execution produces expected output (files/logs).
+- **Pipeline Completeness (50% weight of category):**
+  - **PGR Analysis**: Automatically reconstructs the pipeline DAG.
+  - **Scoring**: Higher scores for repositories that implement the full canonical ML pipeline (**Dataset -> Preprocessing -> Training -> Evaluation -> Artifacts**).
+  - **Critical Penalties**: Missing **Evaluation** or **Training** stages in a research repository result in significant category-level penalties.
 
 ## 6. Documentation (10%)
 Assesses the structural quality of project documentation.

@@ -56,12 +56,34 @@ class DecayMetrics(BaseModel):
     decay_curve: list[dict] # [{"date": "Year -x", "score": float}]
 
 
+class PipelineNode(BaseModel):
+    id: str
+    label: str
+    stage: str  # dataset, preprocessing, training, evaluation, inference, artifact
+    file: str | None = None
+    entry_function: str | None = None
+    status: str = "detected"  # detected, inferred, missing/placeholder
+    framework: str | None = None
+    inputs: list[str] = []
+    outputs: list[str] = []
+
+class PipelineEdge(BaseModel):
+    source: str
+    target: str
+    type: str = "data_flow"  # data_flow, execution_flow
+
+class PipelineGraph(BaseModel):
+    nodes: list[PipelineNode]
+    edges: list[PipelineEdge]
+    completeness_score: float = 0.0
+
 class AuditReport(BaseModel):
     categories: list[CategoryScore]
     total_score: float = Field(ge=0, le=100)
     summary: str = ""
     patch: str | None = None
     decay_metrics: DecayMetrics | None = None
+    pipeline_graph: PipelineGraph | None = None
 
 
 

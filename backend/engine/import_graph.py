@@ -13,7 +13,7 @@ import logging
 from dataclasses import dataclass, field
 
 from models import Issue
-from engine.utils import skip_ignored_dirs
+from engine.utils import skip_ignored_dirs, resolve_call_name
 from engine.parsers import extract_python_from_ipynb
 
 logger = logging.getLogger(__name__)
@@ -168,8 +168,10 @@ class _ModuleVisitor(ast.NodeVisitor):
         return (_is_name(left) and _is_main(comp)) or \
                (_is_main(left) and _is_name(comp))
 
+
+
     def visit_Call(self, node: ast.Call) -> None:
-        name = self._resolve_call_name(node)
+        name = resolve_call_name(node)
         if name:
             self.calls.append(CallInfo(
                 name=name,
@@ -183,17 +185,6 @@ class _ModuleVisitor(ast.NodeVisitor):
                 self.seed_in_functions[self._current_func].append(node.lineno)
         self.generic_visit(node)
 
-    def _resolve_call_name(self, node: ast.Call) -> str | None:
-        parts: list[str] = []
-        current = node.func
-        while isinstance(current, ast.Attribute):
-            parts.append(current.attr)
-            current = current.value
-        if isinstance(current, ast.Name):
-            parts.append(current.id)
-        else:
-            return None
-        return ".".join(reversed(parts))
 
 
 # Seed call detection (reusing ast_auditor's knowledge)

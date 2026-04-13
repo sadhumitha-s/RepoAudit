@@ -36,11 +36,12 @@ RepoAudit scans public GitHub ML repositories and produces a **reproducibility s
 | Determinism | 20% | AST-verified seeding, **Non-deterministic shuffling detection**, Notebook out-of-order execution, cell mutation |
 | Datasets | 15% | No hardcoded paths, **Data Provenance (URL liveness, gated datasets)** |
 | Semantic | 20% | AI-verified alignment between README and repo structure |
-| Execution | 20% | **L0–L3 Replay Verification via Bubblewrap**, Presence of standard entry points (`train.py`, `Makefile`, etc.) |
+| Execution | 20% | **L0–L3 Replay Verification via Bubblewrap**, **Pipeline Graph Reconstruction (PGR)**, Presence of standard entry points (`train.py`, `Makefile`, etc.) |
 | Documentation | 10% | README sections for Installation, Usage, Datasets |
 
 ## What's New in v2.0
 
+- **Pipeline Graph Reconstruction (PGR)**: Automatically infer end-to-end ML workflows via AST analysis. Visualizes the DAG (Dataset -> Preprocessing -> Training -> Eval -> Artifacts) with cross-module data flow tracking.
 - **Multi-Repository Comparative Analysis**: Benchmark up to 5 repositories side-by-side with overlaid radar charts and **"Golden Standard"** identification.
 - **Reproducibility Decay Tracking**: Monitor "bit rot" via dependency stale-dating, yanked package detection, and CVE scanning with temporal decay curves.
 - **Execution Replay Verification**: Lightweight **Bubblewrap sandboxing** for L0–L3 dynamic reproduction checks (Deps -> Imports -> Entrypoints -> Outputs).
@@ -95,6 +96,7 @@ RepoAudit/
 │   │   ├── sandbox.py                         # Bubblewrap orchestration
 │   │   ├── replay_auditor.py                  # Dynamic L0–L3 execution verification
 │   │   ├── decay_auditor.py                   # Reproducibility decay (bit rot) tracking
+│   │   ├── pipeline_auditor.py                # Pipeline Graph Reconstruction (PGR)
 │   │   ├── auto_remediator.py                 # AST-powered deterministic code-mod engine
 │   │   └── scoring.py                         # Weighted score computation
 │   └── tests/
@@ -120,6 +122,7 @@ RepoAudit/
 │   │   ├── ScoreHistory.tsx  # Score trend line chart
 │   │   ├── FixFeed.tsx       # Prioritized issue list
 │   │   ├── DecayCard.tsx     # Decay curve & shelf-life visualization
+│   │   ├── PipelineGraph.tsx # Interactive DAG visualization (ReactFlow)
 │   │   └── StatusIndicator.tsx   # Progress stepper
 │   └── lib/
 │       └── api.ts            # Typed API client
@@ -281,6 +284,7 @@ curl -X POST https://repoaudit-api.onrender.com/api/v1/audit \
 - **Execution Replay Verification (Lightweight)**: Goes beyond static analysis by performing a 4-tier reproduction check in a **Bubblewrap sandbox** (L0: Deps Install, L1: Import Success, L2: Entry point runs for >5s, L3: Output Production), providing a pass/fail signal for the actual reproducibility of the claimed workflow.
 - **Reproducibility Decay Tracking**: Quantifies "bit rot" by performing temporal analysis on pinned dependencies. It integrates with PyPI/CRAN/Pkg registries to detect yanked distributions and known CVEs, generating a predicted "shelf-life" score and decay curve visualization for long-term auditability.
 - **Reproducibility Scoring**: A weighted 0-100 score based on environment, determinism, datasets, and semantic alignment.
+- **Pipeline Graph Reconstruction (PGR)**: Infer end-to-end ML workflows by statically analyzing source code and import relationships. Identifies stages (Dataset, Preprocessing, Training, Eval, Artifact), traces variable propagation across files, and calculates a pipeline completeness score. Visualizes the resulting DAG interactively using ReactFlow.
 - **Multi-Repository Comparative Analysis**: Compare reproducibility across related repositories (e.g., competing implementations of the same paper). Features an overlaid radar chart for 6-axis category breakdown, identifies the "Golden Standard" implementation with a 0-100 benchmark, and provides a unified comparison dashboard for research reviewers and reproducibility chairs.
 
 ## GitHub Action

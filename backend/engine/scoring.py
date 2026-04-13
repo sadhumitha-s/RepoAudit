@@ -13,6 +13,7 @@ from engine.dependency_auditor import DependencyAuditResult
 from engine.semantic_auditor import SemanticAuditResult
 from engine.replay_auditor import ExecutionReplayResult
 from engine.decay_auditor import DecayAuditResult
+from engine.pipeline_auditor import PipelineGraph
 
 
 CATEGORY_WEIGHTS: dict[str, float] = {
@@ -196,6 +197,7 @@ def _score_execution(
     repo_path: str,
     graph_issues: list[Issue],
     replay_result: ExecutionReplayResult | None = None,
+    pipeline_graph: PipelineGraph | None = None,
 ) -> CategoryScore:
     """Score presence of entry points + dynamic execution replay verification."""
     score = 0.0
@@ -233,6 +235,12 @@ def _score_execution(
         # Combine static entry-point discovery with dynamic results
         # If dynamic verification passed, it's a huge boost
         score = (score * 0.3) + (dynamic_score * 0.7)
+    
+    # Factor in Pipeline Completeness
+    if pipeline_graph:
+        # Completeness score contributes to the final execution score
+        # 50% from static/dynamic entry points, 50% from pipeline completeness
+        score = (score * 0.5) + (pipeline_graph.completeness_score * 0.5)
     elif replay_result and replay_result.error:
         # If it failed to even start (e.g. no bwrap), keep static score but add info
         pass
@@ -288,6 +296,8 @@ def compute_report(
     replay_result: ExecutionReplayResult | None = None,
     decay_result: DecayAuditResult | None = None,
     decay_issues: list[Issue] | None = None,
+    pipeline_graph: PipelineGraph | None = None,
+    pipeline_issues: list[Issue] | None = None,
 ) -> AuditReport:
     """Compute the full audit report with weighted scores."""
     if graph_issues is None:
@@ -300,9 +310,15 @@ def compute_report(
         _score_determinism(det_issues, graph_issues),
         _score_datasets(path_issues, semantic_result, provenance_issues),
         _score_semantic(semantic_result, semantic_issues, drift_issues),
-        _score_execution(repo_path, graph_issues, replay_result),
+        _score_execution(repo_path, graph_issues, replay_result, pipeline_graph),
         _score_documentation(semantic_result, semantic_issues),
     ]
+
+    all_issues = []
+    if pipeline_issues:
+        for cat in categories:
+            if cat.name == "execution":
+                cat.issues.extend(pipeline_issues)
 
     total = sum(c.score * c.weight for c in categories)
     total = round(max(0, min(100, total)), 1)
@@ -334,4 +350,5 @@ def compute_report(
         total_score=total,
         summary=summary,
         decay_metrics=decay_metrics,
+        pipeline_graph=pipeline_graph,
     )

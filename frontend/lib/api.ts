@@ -22,12 +22,37 @@ export interface DecayMetrics {
   decay_curve: { date: string; score: number }[];
 }
 
+export interface PipelineNode {
+  id: string;
+  label: string;
+  stage: string;
+  file?: string;
+  entry_function?: string;
+  status: string;
+  framework?: string;
+  inputs: string[];
+  outputs: string[];
+}
+
+export interface PipelineEdge {
+  source: string;
+  target: string;
+  type: string;
+}
+
+export interface PipelineGraph {
+  nodes: PipelineNode[];
+  edges: PipelineEdge[];
+  completeness_score: number;
+}
+
 export interface AuditReport {
   categories: CategoryScore[];
   total_score: number;
   summary: string;
   patch?: string;
   decay_metrics?: DecayMetrics;
+  pipeline_graph?: PipelineGraph;
 }
 
 export interface AuditResponse {

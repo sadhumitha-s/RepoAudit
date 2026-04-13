@@ -33,7 +33,7 @@ graph TD
 - **Role**: Provides the user interface for submitting repositories and viewing audit results.
 - **Key Features**: 
   - Real-time status polling for ongoing audits.
-  - Interactive visualizations (Radar charts, score history).
+  - Interactive visualizations (Radar charts, score history, **Pipeline DAG**).
   - Responsive design using Tailwind CSS.
 
 ### 2. Backend API (FastAPI)
@@ -76,6 +76,7 @@ The audit engine utilizes a pipeline of specialized auditors, each focusing on a
 | **Notebook Analyzer** | Performs deep analysis on Jupyter Notebooks for execution order and state. | AST analysis of `.ipynb` JSON structure and cell content. |
 | **Replay Auditor** | Performs dynamic execution checks (L0–L3 verification). | Orchestrates Bubblewrap for secure execution. |
 | **Decay Auditor** | Tracks "bit rot" via dependency stale-dating and yanked packages. | PyPI API snapshots & dependency age analysis. |
+| **Pipeline Auditor** | Reconstructs ML workflows (Dataset -> Training -> Eval). | AST-based data flow & framework-specific pattern engine. |
 | **Auto-Remediator** | Generates patches for high-confidence reproducibility issues. | Deterministic code-mods via `libcst`. |
 
 ## Security & Isolation

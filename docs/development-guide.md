@@ -42,7 +42,7 @@ Best for active development where you want faster reload times.
   - `routers/`: API endpoint definitions.
 - `frontend/`: Next.js 15 application.
   - `app/`: App router pages.
-  - `components/`: UI components (radar charts, score cards).
+  - `components/`: UI components (radar charts, score cards, **Pipeline DAG**).
 
 ## 3. Adding a New Auditor
 
@@ -74,6 +74,7 @@ pytest
 **Run Specific Audit Tests**:
 ```bash
 pytest tests/test_ast_auditor.py
+pytest tests/test_pipeline_auditor.py
 ```
 
 ## 5. Coding Standards

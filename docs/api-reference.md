@@ -49,6 +49,11 @@ Submit a repository for audit. If the exact commit hash has already been audited
       "shelf_life_days": 1200,
       "time_to_break_days": 800,
       "decay_curve": [{"date": "Year -1", "score": 95.0}, ...]
+    },
+    "pipeline_graph": {
+      "nodes": [{"id": "data_dataset", "label": "Dataset (data.py)", "stage": "dataset", ...}],
+      "edges": [{"source": "data_dataset", "target": "train_training", "type": "data_flow"}],
+      "completeness_score": 100.0
     }
   },
   "cached": true
@@ -82,6 +87,7 @@ A lightweight endpoint for polling the progress of an active audit task.
 - `cloning`: Repository is being shallow-cloned.
 - `ast_analysis`: Running AST and dependency checks.
 - `decay_analysis`: Analyzing dependency history (PyPI) for yanked packages and CVEs.
+- `pipeline_analysis`: Reconstructing the ML pipeline graph.
 - `semantic_audit`: Performing LLM-powered README analysis.
 - `finalizing`: Computing final scores and storing results.
 - `completed`: Analysis finished successfully.

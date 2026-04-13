@@ -6,6 +6,7 @@ import { RadarChart } from "@/components/RadarChart";
 import { FixFeed } from "@/components/FixFeed";
 import { ScoreHistory } from "@/components/ScoreHistory";
 import { DecayCard } from "@/components/DecayCard";
+import { PipelineGraph } from "@/components/PipelineGraph";
 import { StatusIndicator } from "@/components/StatusIndicator";
 import { getAudit, type AuditResponse } from "@/lib/api";
 
@@ -73,6 +74,12 @@ export function AuditDetail({ id }: { id: string }) {
       {audit.report.decay_metrics && (
         <div className="grid gap-6 md:grid-cols-1">
           <DecayCard metrics={audit.report.decay_metrics} />
+        </div>
+      )}
+
+      {audit.report.pipeline_graph && (
+        <div className="grid gap-6 md:grid-cols-1">
+          <PipelineGraph graph={audit.report.pipeline_graph} />
         </div>
       )}
 

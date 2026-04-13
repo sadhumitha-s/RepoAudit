@@ -9,12 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "clsx": "^2.1.0",
+    "lucide-react": "^0.468.0",
     "next": "15.5.12",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "reactflow": "^11.11.4",
     "recharts": "^2.15.0",
-    "lucide-react": "^0.468.0",
-    "clsx": "^2.1.0",
     "tailwind-merge": "^2.2.1"
   },
   "devDependencies": {
