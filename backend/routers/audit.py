@@ -39,11 +39,11 @@ def _get_redis() -> redis_lib.Redis:
 
 
 @router.post("/audit", response_model=AuditResponse)
-async def submit_audit(req: AuditRequest):
+async def submit_audit(req: AuditRequest, force: bool = Query(default=False)):
     """Submit a repository for audit. Returns cached result or queues a new task."""
     try:
         url = resolve_url(req.url)
-        return await _submit_single_audit(url)
+        return await _submit_single_audit(url, force=force)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -58,7 +58,8 @@ async def compare_repositories(req: ComparisonRequest):
     for url_str in req.urls:
         try:
             url = resolve_url(url_str)
-            result = await _submit_single_audit(url)
+            # Default to not forcing for comparisons unless we add it to req
+            result = await _submit_single_audit(url, force=False)
             results.append(result)
         except Exception as e:
             logger.warning("Failed to process URL during comparison %s: %s", url_str, e)
@@ -73,7 +74,7 @@ async def compare_repositories(req: ComparisonRequest):
     return ComparisonResponse(results=results)
 
 
-async def _submit_single_audit(url: str) -> AuditResponse:
+async def _submit_single_audit(url: str, force: bool = False) -> AuditResponse:
     """Helper to process a single audit submission."""
     # Step 1: Resolve latest commit hash
     try:
@@ -83,55 +84,57 @@ async def _submit_single_audit(url: str) -> AuditResponse:
     except RuntimeError as e:
         raise HTTPException(status_code=502, detail=str(e))
 
-    # Step 2: Check Redis cache
-    try:
-        r = _get_redis()
-        cached = r.get(f"audit:result:{commit_hash}")
-        if cached:
-            data = json.loads(cached)
-            return AuditResponse(
-                audit_id=data["audit_id"],
-                repo_url=url,
-                status=AuditStatus.COMPLETED,
-                commit_hash=commit_hash,
-                score=data["score"],
-                report=AuditReport(**data["report"]),
-                cached=True,
-            )
-    except redis_lib.RedisError as e:
-        logger.warning("Redis cache check failed: %s", e)
-
-    # Step 3: Check database for existing result
-    try:
-        db = get_db()
-        existing = (
-            db.table("audits")
-            .select("id, score, report_json, created_at")
-            .eq("commit_hash", commit_hash)
-            .order("created_at", desc=True)
-            .limit(1)
-            .execute()
-        )
-
-        if existing.data:
-            row = existing.data[0]
-            report_data = row["report_json"]
-            if isinstance(report_data, str):
-                report_data = json.loads(report_data)
-
-            if "error" not in report_data:
+    # Step 2 & 3: Check cache if not forced
+    if not force:
+        # Step 2: Check Redis cache
+        try:
+            r = _get_redis()
+            cached = r.get(f"audit:result:{commit_hash}")
+            if cached:
+                data = json.loads(cached)
                 return AuditResponse(
-                    audit_id=row["id"],
+                    audit_id=data["audit_id"],
                     repo_url=url,
                     status=AuditStatus.COMPLETED,
                     commit_hash=commit_hash,
-                    score=row["score"],
-                    report=AuditReport(**report_data),
-                    created_at=row.get("created_at"),
+                    score=data["score"],
+                    report=AuditReport(**data["report"]),
                     cached=True,
                 )
-    except Exception as e:
-        logger.warning("Database cache check failed: %s", e)
+        except redis_lib.RedisError as e:
+            logger.warning("Redis cache check failed: %s", e)
+
+        # Step 3: Check database for existing result
+        try:
+            db = get_db()
+            existing = (
+                db.table("audits")
+                .select("id, score, report_json, created_at")
+                .eq("commit_hash", commit_hash)
+                .order("created_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+
+            if existing.data:
+                row = existing.data[0]
+                report_data = row["report_json"]
+                if isinstance(report_data, str):
+                    report_data = json.loads(report_data)
+
+                if "error" not in report_data:
+                    return AuditResponse(
+                        audit_id=row["id"],
+                        repo_url=url,
+                        status=AuditStatus.COMPLETED,
+                        commit_hash=commit_hash,
+                        score=row["score"],
+                        report=AuditReport(**report_data),
+                        created_at=row.get("created_at"),
+                        cached=True,
+                    )
+        except Exception as e:
+            logger.warning("Database cache check failed: %s", e)
 
     # Step 4: Queue new audit
     audit_id = str(uuid.uuid4())

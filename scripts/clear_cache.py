@@ -4,9 +4,15 @@ import sys
 import shutil
 import redis
 from supabase import create_client, Client
+from dotenv import load_dotenv
 
 # Add backend to path to use config
-sys.path.append(os.path.join(os.getcwd(), 'backend'))
+backend_dir = os.path.join(os.getcwd(), 'backend')
+sys.path.append(backend_dir)
+
+# Explicitly load .env from the backend directory
+load_dotenv(os.path.join(backend_dir, '.env'))
+
 from config import get_settings
 
 def clear_cache():
@@ -15,7 +21,8 @@ def clear_cache():
     # 1. Clear Redis
     try:
         print(f"Connecting to Redis at {settings.redis_url}...")
-        r = redis.from_url(settings.redis_url)
+        # Disable SSL certificate verification for this one-off maintenance task
+        r = redis.from_url(settings.redis_url, ssl_cert_reqs=None)
         r.flushall()
         print("✅ Redis cache cleared (FLUSHALL).")
     except Exception as e:

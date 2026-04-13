@@ -40,33 +40,39 @@ class StageSignal:
 # Detection Strategies
 SIGNALS = [
     # Dataset Acquisition
-    StageSignal(STAGE_DATASET, "pandas", ["read_csv", "read_parquet", "read_sql", "read_json"]),
-    StageSignal(STAGE_DATASET, "torch", ["DataLoader", "datasets.LoadDataset", "torchvision.datasets"]),
-    StageSignal(STAGE_DATASET, "tensorflow", ["tf.data.Dataset", "tf.keras.utils.get_file"]),
-    StageSignal(STAGE_DATASET, "huggingface", ["load_dataset"]),
+    StageSignal(STAGE_DATASET, "pandas", ["read_csv", "read_parquet", "read_sql", "read_json", "read_excel", "read_feather"]),
+    StageSignal(STAGE_DATASET, "torch", ["DataLoader", "datasets.LoadDataset", "torchvision.datasets", "Subset", "ConcatDataset"]),
+    StageSignal(STAGE_DATASET, "tensorflow", ["tf.data.Dataset", "tf.keras.utils.get_file", "from_tensor_slices", "make_csv_dataset"]),
+    StageSignal(STAGE_DATASET, "huggingface", ["load_dataset", "load_from_disk"]),
+    StageSignal(STAGE_DATASET, "numpy", ["load", "loadtxt", "genfromtxt"]),
     
     # Preprocessing
-    StageSignal(STAGE_PREPROCESSING, "sklearn", ["StandardScaler", "MinMaxScaler", "LabelEncoder", "OneHotEncoder"]),
-    StageSignal(STAGE_PREPROCESSING, "huggingface", ["AutoTokenizer", "Tokenizer", "encode", "batch_encode_plus"]),
-    StageSignal(STAGE_PREPROCESSING, "torch", ["transforms.Compose", "transforms.Resize", "transforms.Normalize"]),
-    StageSignal(STAGE_PREPROCESSING, "opencv", ["cvtColor", "resize", "GaussianBlur"]),
+    StageSignal(STAGE_PREPROCESSING, "sklearn", ["StandardScaler", "MinMaxScaler", "LabelEncoder", "OneHotEncoder", "ColumnTransformer", "SimpleImputer"]),
+    StageSignal(STAGE_PREPROCESSING, "huggingface", ["AutoTokenizer", "Tokenizer", "encode", "batch_encode_plus", "feature_extractor"]),
+    StageSignal(STAGE_PREPROCESSING, "torch", ["transforms.Compose", "transforms.Resize", "transforms.Normalize", "transforms.ToTensor"]),
+    StageSignal(STAGE_PREPROCESSING, "opencv", ["cvtColor", "resize", "GaussianBlur", "imread"]),
+    StageSignal(STAGE_PREPROCESSING, "nltk", ["tokenize", "stem", "word_tokenize"]),
     
     # Training
-    StageSignal(STAGE_TRAINING, "torch", ["optimizer.step", "loss.backward", "model.train", "Trainer.train"]),
-    StageSignal(STAGE_TRAINING, "tensorflow", ["model.fit", "GradientTape", "train_step"]),
-    StageSignal(STAGE_TRAINING, "sklearn", ["LinearRegression.fit", "RandomForestClassifier.fit", "SVC.fit", "fit"]),
-    StageSignal(STAGE_TRAINING, "lightning", ["Trainer.fit"]),
+    StageSignal(STAGE_TRAINING, "torch", ["optimizer.step", "loss.backward", "model.train", "Trainer.train", "autograd.grad"]),
+    StageSignal(STAGE_TRAINING, "tensorflow", ["model.fit", "GradientTape", "train_step", "model.train_on_batch"]),
+    StageSignal(STAGE_TRAINING, "sklearn", ["LinearRegression.fit", "RandomForestClassifier.fit", "SVC.fit", "fit", "partial_fit"]),
+    StageSignal(STAGE_TRAINING, "lightning", ["Trainer.fit", "training_step"]),
+    StageSignal(STAGE_TRAINING, "xgboost", ["xgb.train", "XGBClassifier.fit", "XGBRegressor.fit"]),
+    StageSignal(STAGE_TRAINING, "lightgbm", ["lgb.train", "LGBMClassifier.fit"]),
     
     # Evaluation
-    StageSignal(STAGE_EVALUATION, "sklearn", ["accuracy_score", "f1_score", "classification_report", "confusion_matrix"]),
-    StageSignal(STAGE_EVALUATION, "torch", ["model.eval", "torch.no_grad", "validate"]),
-    StageSignal(STAGE_EVALUATION, "huggingface", ["evaluate", "compute_metrics"]),
+    StageSignal(STAGE_EVALUATION, "sklearn", ["accuracy_score", "f1_score", "classification_report", "confusion_matrix", "roc_auc_score", "mean_squared_error"]),
+    StageSignal(STAGE_EVALUATION, "torch", ["model.eval", "torch.no_grad", "validate", "validation_step"]),
+    StageSignal(STAGE_EVALUATION, "huggingface", ["evaluate", "compute_metrics", "eval_dataset"]),
+    StageSignal(STAGE_EVALUATION, "tensorflow", ["model.evaluate", "test_step"]),
     
     # Artifact Generation
     StageSignal(STAGE_ARTIFACT, "torch", ["save", "save_state_dict"]),
-    StageSignal(STAGE_ARTIFACT, "huggingface", ["save_pretrained", "push_to_hub"]),
+    StageSignal(STAGE_ARTIFACT, "huggingface", ["save_pretrained", "push_to_hub", "save_model"]),
     StageSignal(STAGE_ARTIFACT, "pickle", ["dump"]),
-    StageSignal(STAGE_ARTIFACT, "joblib", ["dump"]),
+    StageSignal(STAGE_ARTIFACT, "joblib", ["dump", "save"]),
+    StageSignal(STAGE_ARTIFACT, "tensorflow", ["save_model", "model.save"]),
 ]
 
 class DeepDataFlowTracker(ast.NodeVisitor):

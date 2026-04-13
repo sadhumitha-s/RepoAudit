@@ -66,7 +66,7 @@ const nodeTypes = {
 };
 
 interface Props {
-  graph: {
+  graph?: {
     nodes: any[];
     edges: any[];
     completeness_score: number;
@@ -111,7 +111,7 @@ export function PipelineGraph({ graph }: Props) {
         <div className="flex items-center gap-2 bg-zinc-900/80 px-2 py-1 rounded border border-zinc-800 shadow-xl">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <span className="text-[10px] font-bold text-zinc-400">
-            Completeness: {Math.round(graph.completeness_score)}%
+            Completeness: {Math.round(graph?.completeness_score ?? 0)}%
           </span>
         </div>
       </div>
@@ -130,12 +130,12 @@ export function PipelineGraph({ graph }: Props) {
       ) : (
         <div className="flex flex-col items-center justify-center h-full space-y-4">
           <div className="w-12 h-12 rounded-full border-2 border-dashed border-zinc-700 flex items-center justify-center">
-            <span className="text-zinc-700 text-xl font-black">?</span>
+            <span className="text-zinc-600 text-xl font-black">?</span>
           </div>
-          <div className="text-center">
-            <p className="text-zinc-400 font-bold uppercase text-xs tracking-widest">No stages detected</p>
-            <p className="text-zinc-600 text-[10px] max-w-[200px] mt-1 italic">
-              Try a repo with clear ML training signals (e.g. Scikit-learn fit, PyTorch train loop).
+          <div className="text-center px-6">
+            <p className="text-zinc-400 font-bold uppercase text-xs tracking-widest">No ML stages detected</p>
+            <p className="text-zinc-600 text-[10px] max-w-[280px] mt-2 italic leading-relaxed">
+              We couldn't reconstruct the pipeline graph. This happens if the repo uses custom frameworks or lacks standard training signals (e.g. Scikit-learn fit, PyTorch train loops).
             </p>
           </div>
         </div>
