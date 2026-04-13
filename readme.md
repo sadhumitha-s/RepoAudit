@@ -39,15 +39,6 @@ RepoAudit scans public GitHub ML repositories and produces a **reproducibility s
 | Execution | 20% | **L0–L3 Replay Verification via Bubblewrap**, **Pipeline Graph Reconstruction (PGR)**, Presence of standard entry points (`train.py`, `Makefile`, etc.) |
 | Documentation | 10% | README sections for Installation, Usage, Datasets |
 
-## What's New in v2.0
-
-- **Pipeline Graph Reconstruction (PGR)**: Automatically infer end-to-end ML workflows via AST analysis. Visualizes the DAG (Dataset -> Preprocessing -> Training -> Eval -> Artifacts) with cross-module data flow tracking.
-- **Multi-Repository Comparative Analysis**: Benchmark up to 5 repositories side-by-side with overlaid radar charts and **"Golden Standard"** identification.
-- **Reproducibility Decay Tracking**: Monitor "bit rot" via dependency stale-dating, yanked package detection, and CVE scanning with temporal decay curves.
-- **Execution Replay Verification**: Lightweight **Bubblewrap sandboxing** for L0–L3 dynamic reproduction checks (Deps -> Imports -> Entrypoints -> Outputs).
-- **Notebook Deep Analysis**: Advanced AST auditing for Jupyter Notebooks (out-of-order execution, global state mutation detection, and "Restart & Run All" compatibility).
-- **Automated GitHub Release Workflow**: Streamlined versioning and deployment via GitHub Actions.
-- **Optimized Audit Engine**: Faster analysis with non-essential directory skipping and robust Celery task management.
 
 ## Tech Stack
 
@@ -247,6 +238,16 @@ RepoAudit runs on an entirely free stack:
    | `NEXT_PUBLIC_API_URL` | `https://your-app.onrender.com` |
 
 4. **Update ALLOWED_ORIGINS** on Render to include your Vercel URL.
+
+### Auto-deploy on every push (Render + Vercel)
+
+- **Vercel**: If the project is connected to GitHub, Vercel automatically deploys on every push to `main` by default.
+- **Render**: Make sure **Auto-Deploy** is enabled for your Render service. If your Render service isn’t auto-deploying reliably, add the GitHub Actions fallback below.
+
+**GitHub Actions fallback (recommended for Render):**
+1. In Render, open your service → **Settings** → **Deploy Hook** → copy the hook URL.
+2. In GitHub, add a repo secret named `RENDER_DEPLOY_HOOK_URL` with that value.
+3. Pushing to `main` will now trigger Render via `.github/workflows/deploy-render.yml`.
 
 ## API Endpoints
 
