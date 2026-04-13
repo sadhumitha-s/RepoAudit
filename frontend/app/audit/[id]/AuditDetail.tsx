@@ -21,6 +21,9 @@ export function AuditDetail({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  console.log("PGR Data received:", audit?.report?.pipeline_graph);
+  console.log("Decay Data received:", audit?.report?.decay_metrics);
+
   useEffect(() => {
     if (!id) return;
     getAudit(id)

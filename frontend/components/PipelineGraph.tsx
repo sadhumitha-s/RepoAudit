@@ -75,7 +75,7 @@ interface Props {
 
 export function PipelineGraph({ graph }: Props) {
   const nodes: Node[] = useMemo(() => {
-    return graph.nodes.map((n, i) => ({
+    return (graph?.nodes ?? []).map((n, i) => ({
       id: n.id,
       type: 'pipeline',
       data: { 
@@ -88,10 +88,10 @@ export function PipelineGraph({ graph }: Props) {
       // Simple vertical layout for now
       position: { x: 0, y: i * 120 },
     }));
-  }, [graph.nodes]);
+  }, [graph?.nodes]);
 
   const edges: Edge[] = useMemo(() => {
-    return graph.edges.map((e, i) => ({
+    return (graph?.edges ?? []).map((e, i) => ({
       id: `e-${i}`,
       source: e.source,
       target: e.target,
@@ -102,7 +102,7 @@ export function PipelineGraph({ graph }: Props) {
         color: '#52525b',
       },
     }));
-  }, [graph.edges]);
+  }, [graph?.edges]);
 
   return (
     <div className="neo-card p-0 h-[500px] relative overflow-hidden bg-black/40">
