@@ -152,11 +152,6 @@ Returns the operational status of the API and its connection to backends (Redis,
 ```json
 {
   "status": "ok",
-  "version": "2.0.0",
-  "services": {
-    "redis": "connected",
-    "database": "connected"
-  }
 }
 ```
 

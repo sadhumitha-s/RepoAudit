@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run RepoAudit
-        uses: sadhumitha-s/RepoAudit@v1.0.0
+        uses: sadhumitha-s/RepoAudit@v2.0.0
         with:
           api-url: https://repoaudit-api.onrender.com
           threshold: "70" # Fail if score is below 70
@@ -60,7 +60,7 @@ You can use the action in a centralized monitoring repo to audit a list of third
 
 ```yaml
       - name: Audit Reference ML Repo
-        uses: sadhumitha-s/RepoAudit@v1.0.0
+        uses: sadhumitha-s/RepoAudit@v2.0.0
         with:
           api-url: https://repoaudit-api.onrender.com
           repo-url: "https://github.com/facebookresearch/llama"
@@ -71,7 +71,7 @@ For large repositories with complex reproduction scripts (high-level replay veri
 
 ```yaml
       - name: Long-running Audit
-        uses: sadhumitha-s/RepoAudit@v1.0.0
+        uses: sadhumitha-s/RepoAudit@v2.0.0
         with:
           api-url: https://repoaudit-api.onrender.com
           timeout-seconds: "1200" # Increase to 20 minutes

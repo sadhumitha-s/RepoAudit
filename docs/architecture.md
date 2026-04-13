@@ -77,6 +77,8 @@ The audit engine utilizes a pipeline of specialized auditors, each focusing on a
 | **Replay Auditor** | Performs dynamic execution checks (L0–L3 verification). | Orchestrates Bubblewrap for secure execution. |
 | **Decay Auditor** | Tracks "bit rot" via dependency stale-dating and yanked packages. | PyPI API snapshots & dependency age analysis. |
 | **Pipeline Auditor** | Reconstructs ML workflows (Dataset -> Training -> Eval). | AST-based data flow & framework-specific pattern engine. |
+| **Configuration Drift Auditor** | Detects divergence between declared and observed environment/configuration state. | LLM-powered README extraction + config/code parsing with value comparison. |
+| **Hardware Fingerprinting Auditor** | Detects environment-specific execution by inspecting hardware and system fingerprints. | AST-based fingerprinting function detection + sensitive path scanning. |
 | **Auto-Remediator** | Generates patches for high-confidence reproducibility issues. | Deterministic code-mods via `libcst`. |
 
 ## Security & Isolation
