@@ -16,6 +16,7 @@ function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
   return { owner: match[1], repo: match[2].replace(/\.git$/, "") };
 }
 
+export function AuditDetail({ id }: { id: string }) {
   const [audit, setAudit] = useState<AuditResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -58,6 +59,7 @@ function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
   const parsed = audit.repo_url ? parseGitHubUrl(audit.repo_url) : null;
 
   return (
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Audit Results</h1>
         {audit.repo_url && (

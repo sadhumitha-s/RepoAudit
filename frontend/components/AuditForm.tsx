@@ -38,8 +38,13 @@ export function AuditForm({ onSubmit, loading }: Props) {
     <form onSubmit={handleSubmit} className="mx-auto max-w-2xl mt-12 mb-16">
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
+          <label htmlFor="repo-url" className="sr-only">
+            GitHub repository URL
+          </label>
           <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
           <input
+            id="repo-url"
+            name="repoUrl"
             type="url"
             value={url}
             onChange={(e) => {
@@ -47,6 +52,9 @@ export function AuditForm({ onSubmit, loading }: Props) {
               setValidationError("");
             }}
             placeholder="https://github.com/owner/repo"
+            autoComplete="url"
+            aria-invalid={Boolean(validationError)}
+            aria-describedby={validationError ? "repo-url-error" : undefined}
             className="w-full h-14 neo-border bg-[#0D1117] text-white py-3 pl-12 pr-4 text-base shadow-neo focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-accent transition-none placeholder:text-gray-500"
             disabled={loading}
           />
@@ -67,7 +75,10 @@ export function AuditForm({ onSubmit, loading }: Props) {
         </button>
       </div>
       {validationError && (
-        <div className="mt-4 neo-border bg-red-500 text-white p-3 font-medium text-sm inline-block shadow-neo">
+        <div
+          id="repo-url-error"
+          className="mt-4 neo-border bg-red-500 text-white p-3 font-medium text-sm inline-block shadow-neo"
+        >
           {validationError}
         </div>
       )}
