@@ -83,11 +83,17 @@ export function AuditDetail({ id }: { id: string }) {
         </div>
       )}
 
-      {audit.report.pipeline_graph && (
-        <div className="grid gap-6 md:grid-cols-1">
-          <PipelineGraph graph={audit.report.pipeline_graph} />
-        </div>
-      )}
+      <div className="grid gap-6 md:grid-cols-1">
+        <PipelineGraph
+          graph={
+            audit.report.pipeline_graph ?? {
+              nodes: [],
+              edges: [],
+              completeness_score: 0,
+            }
+          }
+        />
+      </div>
 
       {parsed && <ScoreHistory owner={parsed.owner} repo={parsed.repo} />}
 

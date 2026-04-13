@@ -8,6 +8,7 @@ import { RadarChart } from "@/components/RadarChart";
 import { FixFeed } from "@/components/FixFeed";
 import { ScoreHistory } from "@/components/ScoreHistory";
 import { DecayCard } from "@/components/DecayCard";
+import { PipelineGraph } from "@/components/PipelineGraph";
 import {
   submitAudit,
   getAudit,
@@ -172,6 +173,18 @@ export default function HomePage() {
               <DecayCard metrics={audit.report.decay_metrics} />
             </div>
           )}
+
+          <div className="grid gap-8 md:grid-cols-1">
+            <PipelineGraph
+              graph={
+                audit.report.pipeline_graph ?? {
+                  nodes: [],
+                  edges: [],
+                  completeness_score: 0,
+                }
+              }
+            />
+          </div>
 
           {parsed && <ScoreHistory owner={parsed.owner} repo={parsed.repo} />}
 
