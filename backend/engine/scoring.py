@@ -300,6 +300,17 @@ def compute_report(
     pipeline_issues: list[Issue] | None = None,
 ) -> AuditReport:
     """Compute the full audit report with weighted scores."""
+    if pipeline_graph is None:
+        pipeline_graph = PipelineGraph()
+    if decay_result is None:
+        decay_metrics = DecayMetrics()
+    else:
+        decay_metrics = DecayMetrics(
+            shelf_life_days=decay_result.shelf_life_days,
+            time_to_break_days=decay_result.time_to_break_days,
+            decay_curve=decay_result.decay_curve
+        )
+
     if graph_issues is None:
         graph_issues = []
     if provenance_issues is None:
@@ -335,14 +346,6 @@ def compute_report(
         summary = (
             f"Significant reproducibility concerns. "
             f"Critical area: {worst.name} ({worst.score}/100)."
-        )
-
-    decay_metrics = None
-    if decay_result:
-        decay_metrics = DecayMetrics(
-            shelf_life_days=decay_result.shelf_life_days,
-            time_to_break_days=decay_result.time_to_break_days,
-            decay_curve=decay_result.decay_curve
         )
 
     return AuditReport(

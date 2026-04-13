@@ -116,16 +116,30 @@ export function PipelineGraph({ graph }: Props) {
         </div>
       </div>
       
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        fitView
-        className="bg-dot-pattern"
-      >
-        <Background color="#18181b" gap={20} />
-        <Controls showInteractive={false} className="!bg-zinc-900 !border-zinc-800 !fill-white shadow-neo" />
-      </ReactFlow>
+      {nodes.length > 0 ? (
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          fitView
+          className="bg-dot-pattern"
+        >
+          <Background color="#18181b" gap={20} />
+          <Controls showInteractive={false} className="!bg-zinc-900 !border-zinc-800 !fill-white shadow-neo" />
+        </ReactFlow>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full space-y-4">
+          <div className="w-12 h-12 rounded-full border-2 border-dashed border-zinc-700 flex items-center justify-center">
+            <span className="text-zinc-700 text-xl font-black">?</span>
+          </div>
+          <div className="text-center">
+            <p className="text-zinc-400 font-bold uppercase text-xs tracking-widest">No stages detected</p>
+            <p className="text-zinc-600 text-[10px] max-w-[200px] mt-1 italic">
+              Try a repo with clear ML training signals (e.g. Scikit-learn fit, PyTorch train loop).
+            </p>
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         .bg-dot-pattern {

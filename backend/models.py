@@ -51,9 +51,9 @@ class CategoryScore(BaseModel):
 
 
 class DecayMetrics(BaseModel):
-    shelf_life_days: int
-    time_to_break_days: int
-    decay_curve: list[dict] # [{"date": "Year -x", "score": float}]
+    shelf_life_days: int = 0
+    time_to_break_days: int = 0
+    decay_curve: list[dict] = [] # [{"date": "Year -x", "score": float}]
 
 
 class PipelineNode(BaseModel):
@@ -73,8 +73,8 @@ class PipelineEdge(BaseModel):
     type: str = "data_flow"  # data_flow, execution_flow
 
 class PipelineGraph(BaseModel):
-    nodes: list[PipelineNode]
-    edges: list[PipelineEdge]
+    nodes: list[PipelineNode] = []
+    edges: list[PipelineEdge] = []
     completeness_score: float = 0.0
 
 class AuditReport(BaseModel):
@@ -82,8 +82,8 @@ class AuditReport(BaseModel):
     total_score: float = Field(ge=0, le=100)
     summary: str = ""
     patch: str | None = None
-    decay_metrics: DecayMetrics | None = None
-    pipeline_graph: PipelineGraph | None = None
+    decay_metrics: DecayMetrics = Field(default_factory=DecayMetrics)
+    pipeline_graph: PipelineGraph = Field(default_factory=PipelineGraph)
 
 
 

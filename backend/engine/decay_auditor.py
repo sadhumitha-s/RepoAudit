@@ -40,8 +40,8 @@ def _parse_pinned_requirements(filepath: str) -> dict[str, str]:
         line = line.strip()
         if not line or line.startswith("#") or line.startswith("-"):
             continue
-        # match exact pinning: package==version
-        match = re.match(r"^([A-Za-z0-9_.\-]+)==([A-Za-z0-9_.\-]+)", line)
+        # match pinning: package==version, package>=version, package~=version
+        match = re.match(r"^([A-Za-z0-9_.\-]+)(?:==|>=|~=)([A-Za-z0-9_.\-]+)", line)
         if match:
             pkg = match.group(1).lower().replace("-", "_")
             ver = match.group(2)
