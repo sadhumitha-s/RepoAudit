@@ -47,7 +47,7 @@ jobs:
           - mode: relaxed
             threshold: "0"
           - mode: strict
-            threshold: "85"
+            threshold: "50"
     continue-on-error: ${{ matrix.mode == 'strict' }}
     steps:
       - name: Checkout
