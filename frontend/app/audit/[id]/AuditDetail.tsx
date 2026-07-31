@@ -8,7 +8,7 @@ import { ScoreHistory } from "@/components/ScoreHistory";
 import { DecayCard } from "@/components/DecayCard";
 import { PipelineGraph } from "@/components/PipelineGraph";
 import { StatusIndicator } from "@/components/StatusIndicator";
-import { getAudit, type AuditResponse } from "@/lib/api";
+import { getAudit, getAuditStatus, type AuditResponse } from "@/lib/api";
 
 function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
   const match = url.match(/github\.com\/([^/]+)\/([^/]+)/);
@@ -20,22 +20,84 @@ export function AuditDetail({ id }: { id: string }) {
   const [audit, setAudit] = useState<AuditResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
-  console.log("Audit Status:", audit?.status);
-  console.log("PGR Data received:", audit?.report?.pipeline_graph);
-  console.log("PGR Nodes:", audit?.report?.pipeline_graph?.nodes?.length);
-  console.log("Decay Data received:", audit?.report?.decay_metrics);
+  const [statusProgress, setStatusProgress] = useState<string>("Loading audit results...");
 
   useEffect(() => {
     if (!id) return;
+
+    let isMounted = true;
+    let pollInterval: NodeJS.Timeout | null = null;
+    let pollAttempts = 0;
+    const MAX_POLLS = 300; // 15 minutes max at 3s intervals
+
+    const loadAudit = async () => {
+      try {
+        const data = await getAudit(id);
+        if (!isMounted) return;
+        setAudit(data);
+
+        if (data.status === "completed" || data.status === "failed") {
+          setLoading(false);
+        } else {
+          // If still processing, start polling status
+          setStatusProgress(data.status || "Queued...");
+          startPolling();
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        setError(err instanceof Error ? err.message : "Failed to load audit");
+        setLoading(false);
+      }
+    };
+
+    const pollStatus = async () => {
+      try {
+        pollAttempts++;
+        if (pollAttempts > MAX_POLLS) {
+          if (pollInterval) clearInterval(pollInterval);
+          setError("Audit timed out. Please try again later.");
+          setLoading(false);
+          return;
+        }
+
+        const statusRes = await getAuditStatus(id);
+        if (!isMounted) return;
+
+        setStatusProgress(statusRes.progress || statusRes.status);
+
+        if (statusRes.status === "completed" || statusRes.status === "failed") {
+          if (pollInterval) clearInterval(pollInterval);
+          // Fetch final data
+          const finalData = await getAudit(id);
+          if (isMounted) {
+            setAudit(finalData);
+            setLoading(false);
+          }
+        }
+      } catch (err) {
+        console.warn("Polling error:", err);
+        // Don't kill polling on transient network errors
+      }
+    };
+
+    const startPolling = () => {
+      if (!pollInterval) {
+        pollInterval = setInterval(pollStatus, 3000);
+      }
+    };
+
     setLoading(true);
-    getAudit(id)
-      .then(setAudit)
-      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load audit"))
-      .finally(() => setLoading(false));
+    loadAudit();
+
+    return () => {
+      isMounted = false;
+      if (pollInterval) clearInterval(pollInterval);
+    };
   }, [id]);
 
-  if (loading) return <StatusIndicator progress="Loading audit results..." />;
+  if (loading || (audit && !audit.report && audit.status !== "failed")) {
+    return <StatusIndicator progress={statusProgress} />;
+  }
 
   if (error) {
     return (

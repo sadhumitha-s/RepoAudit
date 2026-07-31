@@ -278,6 +278,7 @@ curl -X POST https://repoaudit-api.onrender.com/api/v1/audit \
 
 ## Features
 
+- **Real-Time Distributed Architecture**: Powered by Celery and Redis (Upstash), intensive ML audits run entirely asynchronously while the Next.js dashboard polls and visualizes task progress in an interactive real-time stepper.
 - **Deterministic Auto-Remediation Engine**: Powered by offline AST manipulation, it instantly fixes high-confidence reproducibility blockers by injecting missing seeds, dynamically pinning unpinned dependencies, and rewriting hardcoded paths, outputting a concrete `.patch` file natively without LLMs.
 - **Data Provenance Auditing**: Detects how data is loaded, checks URL liveness, flags gated datasets, and identifies non-deterministic preprocessing.
 - **Configuration Drift Detection**: Catches discrepancies between claimed hyperparameters in README and actual values in config files or code defaults.

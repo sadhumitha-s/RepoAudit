@@ -32,28 +32,33 @@ graph TD
 ### 1. Frontend (Next.js 15)
 - **Role**: Provides the user interface for submitting repositories and viewing audit results.
 - **Key Features**: 
-  - Real-time status polling for ongoing audits.
+  - **Real-Time Progress UI**: Reads live audit statuses by actively polling the FastAPI backend to present an interactive progress stepper, ensuring users stay engaged during long audits.
   - Interactive visualizations (Radar charts, score history, **Pipeline DAG**).
   - Responsive design using Tailwind CSS.
 
 ### 2. Backend API (FastAPI)
-- **Role**: Entry point for all requests, managing audit lifecycle and result retrieval.
+- **Role**: Entry point for all requests, managing audit lifecycle and result retrieval. Bypasses HTTP timeouts (e.g., Render/Vercel 30s-60s limits) by instantly returning a queued response.
+- **Startup Command**: `uvicorn main:app --host 0.0.0.0 --port 7860`
 - **Key Features**:
-  - Asynchronous task submission via Celery.
+  - Receives audit requests, instantly pushes tasks to the Upstash Redis queue, and manages state.
   - Efficient caching layer using Redis for instant result retrieval of known commit hashes.
   - Robust URL resolution for research paper links (arXiv, Papers With Code).
+  - Provides a lightweight status polling endpoint for the frontend.
 
 ### 3. Worker (Celery)
-- **Role**: Performs the actual audit analysis.
+- **Role**: Performs the heavy-lifting, intense multi-phase analysis completely isolated from the web server. Ensures heavy CPU/memory loads and untrusted code execution do not impact API stability.
+- **Startup Command**: `celery -A worker worker --loglevel=info --concurrency=2`
 - **Key Features**:
+  - Listens to the Upstash Redis queue and executes the audit pipeline asynchronously.
+  - Pushes real-time state updates (e.g., `CLONING`, `AST_ANALYSIS`, `FINALIZING`) directly to Redis.
   - Clones repositories lazily (shallow clone).
   - **Optimized Scanning**: Skips non-essential directories (e.g., `.git`, `__pycache__`, `node_modules`, `venv`) to reduce disk I/O and speed up analysis.
   - Orchestrates a suite of specialized auditors.
   - Executes dynamic reproduction checks in a secure sandbox.
 
 ### 4. Storage & State
-- **Redis (Valkey/Upstash)**: Used as the message broker for Celery and as a fast L1 cache for recent audit results.
-- **PostgreSQL (Supabase)**: Persistent storage for repository metadata and historical audit reports.
+- **Redis (Valkey/Upstash with TLS)**: Used as the message broker for Celery, a fast L1 cache for recent audit reports, and the central state store for real-time progress updates.
+- **PostgreSQL (Supabase)**: Persistent storage for repository metadata, commit hashes, and historical audit reports.
 
 ### 5. Multi-Repository Comparative Analysis
 - **Role**: Enabling researchers to benchmark and compare multiple implementations side-by-side.
