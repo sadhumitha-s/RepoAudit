@@ -16,15 +16,18 @@ graph TD
     Sandbox[Bubblewrap Sandbox]
     Git[Public GitHub Repos]
 
-    User <--> Frontend
-    Frontend <--> API
-    API <--> Redis
-    API <--> DB
-    Worker <--> Redis
-    Worker <--> DB
-    Worker <--> Git
-    Worker <--> Sandbox
-    Worker <--> LLM
+    User -->|Submits Repo| Frontend
+    Frontend -->|POST /audit| API
+    Frontend -.->|Polls Status| API
+    API -->|Queues Task| Redis
+    API -->|Checks Cache| Redis
+    API <-->|Reads/Writes Metadata| DB
+    Worker -->|Consumes Task| Redis
+    Worker -->|Updates Live Status| Redis
+    Worker -->|Writes Final Report| DB
+    Worker -->|Clones| Git
+    Worker <-->|Executes Replay| Sandbox
+    Worker <-->|Semantic Audit| LLM
 ```
 
 ## Core Components
